@@ -18,6 +18,7 @@ const CustomerManagement = () => {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [formData, setFormData] = useState({
     name: '',
+    company: '',
     email: '',
     phone: '',
     billToAddress: '',
@@ -28,6 +29,7 @@ const CustomerManagement = () => {
   const filteredCustomers = customers.filter(
     customer =>
       customer.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       customer.phone?.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -45,6 +47,7 @@ const CustomerManagement = () => {
   const resetForm = () => {
     setFormData({
       name: '',
+      company: '',
       email: '',
       phone: '',
       billToAddress: '',
@@ -142,6 +145,17 @@ const CustomerManagement = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Company
+                </label>
+                <input
+                  type="text"
+                  value={formData.company}
+                  onChange={(e) => setFormData(prev => ({ ...prev, company: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gradient-start focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   Email
                 </label>
                 <input
@@ -151,7 +165,6 @@ const CustomerManagement = () => {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gradient-start focus:border-transparent"
                 />
               </div>
-
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Phone
@@ -242,6 +255,9 @@ const CustomerManagement = () => {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900">{customer.name}</h3>
+                    {customer.company && (
+                      <p className="text-sm text-gray-600">{customer.company}</p>
+                    )}
                     <p className="text-sm text-gray-600">{customer.email}</p>
                   </div>
                 </div>
@@ -269,7 +285,6 @@ const CustomerManagement = () => {
                   </button>
                 </div>
               </div>
-
               <div className="space-y-2 text-sm text-gray-600">
                 {customer.phone && (
                   <div><strong>Phone:</strong> {customer.phone}</div>
@@ -286,7 +301,6 @@ const CustomerManagement = () => {
                   </div>
                 )}
               </div>
-
               {/* Create Invoice Button */}
               <div className="mt-4 pt-3 border-t border-gray-200">
                 <button

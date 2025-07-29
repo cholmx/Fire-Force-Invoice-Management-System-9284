@@ -38,23 +38,10 @@ const InvoicePreview = ({ invoiceData, onClose }) => {
     content: () => componentRef.current,
     documentTitle: getDocumentTitle(),
     pageStyle: `
-      @page {
-        size: 8.5in 11in;
-        margin: 0.5in;
-      }
+      @page { size: 8.5in 11in; margin: 0.5in; }
       @media print {
-        body {
-          font-family: 'Inter', sans-serif;
-          font-size: 11px;
-          line-height: 1.3;
-          color: #000;
-        }
-        .print-page {
-          width: 7.5in;
-          min-height: 10in;
-          margin: 0 auto;
-          background: white;
-        }
+        body { font-family: 'Inter', sans-serif; font-size: 11px; line-height: 1.3; color: #000; }
+        .print-page { width: 7.5in; min-height: 10in; margin: 0 auto; background: white; }
       }
     `,
   });
@@ -115,16 +102,7 @@ const InvoicePreview = ({ invoiceData, onClose }) => {
 
               {/* Document Type Header */}
               <div style={{ textAlign: 'center', marginBottom: '16px' }}>
-                <div style={{ 
-                  fontFamily: '"Inter Tight", sans-serif', 
-                  fontSize: '20px', 
-                  fontWeight: 'bold', 
-                  color: '#fff', 
-                  background: `${getTypeColor(invoiceData.transactionType)}`, 
-                  padding: '8px 16px', 
-                  borderRadius: '8px', 
-                  display: 'inline-block' 
-                }}>
+                <div style={{ fontFamily: '"Inter Tight", sans-serif', fontSize: '20px', fontWeight: 'bold', color: '#fff', background: `${getTypeColor(invoiceData.transactionType)}`, padding: '8px 16px', borderRadius: '8px', display: 'inline-block' }}>
                   {invoiceData.transactionType?.toUpperCase() || 'SALES ORDER'}
                 </div>
               </div>
@@ -148,6 +126,7 @@ const InvoicePreview = ({ invoiceData, onClose }) => {
                 </div>
                 <div style={{ fontSize: '10px', marginBottom: '8px' }}>
                   <div style={{ marginBottom: '2px' }}><strong>Name:</strong> {invoiceData.customerName}</div>
+                  {invoiceData.company && <div style={{ marginBottom: '2px' }}><strong>Company:</strong> {invoiceData.company}</div>}
                   <div style={{ marginBottom: '2px' }}><strong>Email:</strong> {invoiceData.customerEmail}</div>
                   <div style={{ marginBottom: '2px' }}><strong>Phone:</strong> {invoiceData.customerPhone}</div>
                   <div><strong>Accounts Payable:</strong> {invoiceData.accountsPayableEmail}</div>
@@ -217,16 +196,7 @@ const InvoicePreview = ({ invoiceData, onClose }) => {
                     <span>Shipping:</span>
                     <span style={{ fontWeight: 'bold' }}>${invoiceData.shippingCost.toFixed(2)}</span>
                   </div>
-                  <div style={{ 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
-                    padding: '10px 12px', 
-                    background: getTypeColor(invoiceData.transactionType), 
-                    color: 'white', 
-                    fontWeight: 'bold', 
-                    fontSize: '12px', 
-                    fontFamily: '"Inter Tight", sans-serif' 
-                  }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 12px', background: getTypeColor(invoiceData.transactionType), color: 'white', fontWeight: 'bold', fontSize: '12px', fontFamily: '"Inter Tight", sans-serif' }}>
                     <span>GRAND TOTAL:</span>
                     <span>${invoiceData.grandTotal.toFixed(2)}</span>
                   </div>

@@ -20,27 +20,30 @@ const InvoiceList = ({ userRole }) => {
   const [previewInvoice, setPreviewInvoice] = useState(null);
   const [confirmDelete, setConfirmDelete] = useState(null);
 
-  // Get list of salesmen for the filter
-  const salesmen = users
-    .filter(u => u.role === 'salesman')
-    .map(u => ({ id: u.id, name: u.name }));
+  // Get list of sales reps for the filter (includes both salesmen and office administrator)
+  const salesReps = [
+    // Add Office Administrator first
+    { id: 'office_admin', name: 'Office Administrator' },
+    // Then add all salesmen
+    ...users
+      .filter(u => u.role === 'salesman')
+      .map(u => ({ id: u.id, name: u.name }))
+  ];
 
   const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch = 
-      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      invoice.poNumber?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    const matchesSearch =
+      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      invoice.poNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.salesRep?.toLowerCase().includes(searchTerm.toLowerCase());
-    
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     const matchesType = typeFilter === 'all' || invoice.transactionType === typeFilter;
     const matchesUser = userRole === 'office' || invoice.salesRep === user?.name;
-    const matchesArchive = 
-      archiveFilter === 'all' || 
-      (archiveFilter === 'active' && !invoice.archived) || 
+    const matchesArchive =
+      archiveFilter === 'all' ||
+      (archiveFilter === 'active' && !invoice.archived) ||
       (archiveFilter === 'archived' && invoice.archived);
-    const matchesSalesman = 
-      salesmanFilter === 'all' || 
-      invoice.salesRep === salesmanFilter;
+    const matchesSalesman = salesmanFilter === 'all' || invoice.salesRep === salesmanFilter;
 
     return matchesSearch && matchesStatus && matchesType && matchesUser && matchesArchive && matchesSalesman;
   });
@@ -89,7 +92,7 @@ const InvoiceList = ({ userRole }) => {
           {userRole === 'office' ? 'All Invoices' : 'My Invoices'}
         </h2>
         {/* Show New Invoice button for both roles */}
-        <Link 
+        <Link
           to={userRole === 'office' ? '/office/invoice/new' : '/salesman/invoice/new'}
           className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
         >
@@ -115,7 +118,6 @@ const InvoiceList = ({ userRole }) => {
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
             />
           </div>
-
           <div className="relative">
             <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <select
@@ -129,7 +131,6 @@ const InvoiceList = ({ userRole }) => {
               <option value="completed">Completed</option>
             </select>
           </div>
-
           <div className="relative">
             <SafeIcon icon={FiFilter} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <select
@@ -143,7 +144,6 @@ const InvoiceList = ({ userRole }) => {
               <option value="Quote">Quote</option>
             </select>
           </div>
-
           {/* Salesman Filter - Only for office users */}
           {userRole === 'office' && (
             <div className="relative">
@@ -153,14 +153,13 @@ const InvoiceList = ({ userRole }) => {
                 onChange={(e) => setSalesmanFilter(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
               >
-                <option value="all">All Salesmen</option>
-                {salesmen.map(salesman => (
-                  <option key={salesman.id} value={salesman.name}>{salesman.name}</option>
+                <option value="all">All Sales Reps</option>
+                {salesReps.map(salesRep => (
+                  <option key={salesRep.id} value={salesRep.name}>{salesRep.name}</option>
                 ))}
               </select>
             </div>
           )}
-
           <div className="relative">
             <SafeIcon icon={FiArchive} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
             <select
@@ -173,7 +172,6 @@ const InvoiceList = ({ userRole }) => {
               <option value="all">All</option>
             </select>
           </div>
-
           <div className="text-right">
             <span className="text-sm text-gray-600">
               {filteredInvoices.length} invoice{filteredInvoices.length !== 1 ? 's' : ''} found
@@ -245,6 +243,11 @@ const InvoiceList = ({ userRole }) => {
                     <div className="text-sm font-medium text-gray-900">
                       {invoice.customerName || 'Unnamed Customer'}
                     </div>
+                    {invoice.company && (
+                      <div className="text-sm text-gray-500">
+                        {invoice.company}
+                      </div>
+                    )}
                     <div className="text-sm text-gray-500">
                       {invoice.customerEmail}
                     </div>
@@ -289,7 +292,6 @@ const InvoiceList = ({ userRole }) => {
                       >
                         <SafeIcon icon={FiEye} />
                       </button>
-                      
                       {/* Allow editing for office users or salesmen for their own invoices if not archived */}
                       {!invoice.archived && (userRole === 'office' || (userRole === 'salesman' && invoice.salesRep === user?.name)) && (
                         <Link
@@ -300,7 +302,6 @@ const InvoiceList = ({ userRole }) => {
                           <SafeIcon icon={FiEdit} />
                         </Link>
                       )}
-                      
                       {/* Archive/Unarchive button */}
                       <button
                         onClick={() => handleArchiveToggle(invoice.id, invoice.archived)}
@@ -309,7 +310,6 @@ const InvoiceList = ({ userRole }) => {
                       >
                         <SafeIcon icon={invoice.archived ? FiRefreshCw : FiArchive} />
                       </button>
-                      
                       {/* Delete button */}
                       <button
                         onClick={() => handleDeleteConfirm(invoice.id)}

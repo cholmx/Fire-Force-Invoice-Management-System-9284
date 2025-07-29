@@ -13,7 +13,7 @@ const { FiPlus, FiFileText, FiUsers, FiBarChart3 } = FiIcons;
 
 const SalesmanDashboard = () => {
   const location = useLocation();
-  
+
   const navItems = [
     { path: '/salesman', label: 'Dashboard', icon: FiBarChart3 },
     { path: '/salesman/invoice/new', label: 'New Invoice', icon: FiPlus },
@@ -23,7 +23,7 @@ const SalesmanDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header title="Salesman Dashboard" />
+      <Header title="Sales Dashboard" />
       <div className="flex">
         <motion.nav
           initial={{ x: -300 }}
@@ -54,7 +54,7 @@ const SalesmanDashboard = () => {
             </ul>
           </div>
         </motion.nav>
-        
+
         <main className="flex-1 p-6">
           <Routes>
             <Route path="/" element={<SalesmanStats />} />

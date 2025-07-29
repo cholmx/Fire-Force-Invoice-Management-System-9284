@@ -104,7 +104,10 @@ const SalesmanStats = () => {
                       <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(invoice.transactionType)}`}>
                         {invoice.transactionType || 'Sales Order'}
                       </span>
-                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${invoice.status === 'completed' ? 'bg-green-100 text-green-800' : invoice.status === 'in-process' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}`}>
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
+                        invoice.status === 'completed' ? 'bg-green-100 text-green-800' :
+                        invoice.status === 'in-process' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                      }`}>
                         {invoice.status || 'pending'}
                       </span>
                     </div>

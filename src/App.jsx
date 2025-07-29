@@ -11,9 +11,13 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { DataProvider, useData } from './context/DataContext';
 import './App.css';
 
+// Import backup scheduler
+import './utils/backupScheduler';
+
 function AppRoutes() {
   const { user, loading: authLoading } = useAuth();
   const { loading: dataLoading } = useData();
+  
   const loading = authLoading || dataLoading;
 
   if (loading) {
@@ -39,22 +43,19 @@ function AppRoutes() {
   return (
     <AnimatePresence mode="wait">
       <Routes>
-        <Route
-          path="/"
-          element={<Navigate to={user.role === 'salesman' ? '/salesman' : '/office'} replace />}
+        <Route 
+          path="/" 
+          element={<Navigate to={user.role === 'salesman' ? '/salesman' : '/office'} replace />} 
         />
-        <Route
-          path="/salesman/*"
-          element={
-            user.role === 'salesman' ? <SalesmanDashboard /> : <Navigate to="/office" replace />
-          }
+        <Route 
+          path="/salesman/*" 
+          element={user.role === 'salesman' ? <SalesmanDashboard /> : <Navigate to="/office" replace />} 
         />
-        <Route
-          path="/office/*"
-          element={
-            user.role === 'office' ? <OfficeDashboard /> : <Navigate to="/salesman" replace />
-          }
+        <Route 
+          path="/office/*" 
+          element={user.role === 'office' ? <OfficeDashboard /> : <Navigate to="/salesman" replace />} 
         />
+        
         {/* Legacy routes for compatibility */}
         <Route path="/invoice/new" element={<InvoiceForm />} />
         <Route path="/invoice/edit/:id" element={<InvoiceForm />} />

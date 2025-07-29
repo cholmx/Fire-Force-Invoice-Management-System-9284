@@ -22,6 +22,7 @@ const InvoiceForm = () => {
     salesRep: user?.name || '',
     transactionType: 'Sales Order',
     customerName: '',
+    company: '',
     customerEmail: '',
     customerPhone: '',
     accountsPayableEmail: '',
@@ -45,13 +46,13 @@ const InvoiceForm = () => {
       setFormData(prev => ({
         ...prev,
         customerName: selectedCustomer.name || '',
+        company: selectedCustomer.company || '',
         customerEmail: selectedCustomer.email || '',
         customerPhone: selectedCustomer.phone || '',
         accountsPayableEmail: selectedCustomer.accountsPayableEmail || '',
         billToAddress: selectedCustomer.billToAddress || '',
         shipToAddress: selectedCustomer.shipToAddress || ''
       }));
-
       // Clear the stored customer to prevent it from being used again
       localStorage.removeItem('selectedCustomer');
     }
@@ -71,7 +72,7 @@ const InvoiceForm = () => {
       setFormData(prev => ({
         ...prev,
         taxRate: settings.taxRate,
-        salesRep: user?.name || ''  // Always set salesRep to current user
+        salesRep: user?.name || '' // Always set salesRep to current user
       }));
     }
   }, [id, invoices, settings.taxRate, user]);
@@ -95,20 +96,12 @@ const InvoiceForm = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
-    const invoiceData = {
-      ...formData,
-      subtotal,
-      tax,
-      grandTotal
-    };
-
+    const invoiceData = { ...formData, subtotal, tax, grandTotal };
     if (id) {
       updateInvoice(id, invoiceData);
     } else {
       addInvoice(invoiceData);
     }
-
     navigate(user?.role === 'salesman' ? '/salesman/invoices' : '/office/invoices');
   };
 
@@ -140,6 +133,7 @@ const InvoiceForm = () => {
     setFormData(prev => ({
       ...prev,
       customerName: customer.name,
+      company: customer.company || '',
       customerEmail: customer.email || '',
       customerPhone: customer.phone || '',
       accountsPayableEmail: customer.accountsPayableEmail || '',
@@ -147,7 +141,7 @@ const InvoiceForm = () => {
       shipToAddress: customer.shipToAddress || ''
     }));
   };
-  
+
   const getTypeColor = (type) => {
     switch (type) {
       case 'Sales Order': return 'bg-red-600 text-white';
@@ -214,7 +208,6 @@ const InvoiceForm = () => {
                 placeholder="Enter P.O. Number"
               />
             </div>
-
             <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">Sales Rep</label>
               {user?.role === 'office' ? (
@@ -234,7 +227,6 @@ const InvoiceForm = () => {
                 />
               )}
             </div>
-
             <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">Transaction Type</label>
               <select
@@ -252,7 +244,6 @@ const InvoiceForm = () => {
                 </span>
               </div>
             </div>
-
             <div className="md:col-span-1">
               <label className="block text-sm font-medium text-gray-700 mb-2">Tax Rate (%)</label>
               <input
@@ -268,7 +259,7 @@ const InvoiceForm = () => {
           </div>
 
           {/* Customer Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Customer Name</label>
               <CustomerSearch
@@ -278,6 +269,17 @@ const InvoiceForm = () => {
                 customers={customers}
                 searchFields={['name']}
                 placeholder="Enter or search customer name"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Company</label>
+              <CustomerSearch
+                value={formData.company}
+                onChange={(value) => setFormData(prev => ({ ...prev, company: value }))}
+                onCustomerSelect={handleCustomerSelect}
+                customers={customers}
+                searchFields={['company']}
+                placeholder="Enter or search company"
               />
             </div>
             <div>
@@ -291,7 +293,6 @@ const InvoiceForm = () => {
                 placeholder="Enter or search customer email"
               />
             </div>
-
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Customer Phone</label>
               <CustomerSearch
@@ -353,7 +354,6 @@ const InvoiceForm = () => {
                 <span>Add Item</span>
               </button>
             </div>
-
             <div className="overflow-x-auto">
               <table className="w-full border border-gray-300">
                 <thead className="bg-gray-50">

@@ -5,13 +5,13 @@ import * as FiIcons from 'react-icons/fi';
 
 const { FiSearch, FiUser } = FiIcons;
 
-const CustomerSearch = ({ 
-  value, 
-  onChange, 
-  onCustomerSelect, 
-  customers, 
-  searchFields = ['name', 'email', 'phone'], 
-  placeholder = "Search customers..." 
+const CustomerSearch = ({
+  value,
+  onChange,
+  onCustomerSelect,
+  customers,
+  searchFields = ['name', 'company', 'email', 'phone'],
+  placeholder = "Search customers..."
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState(value || '');
@@ -35,9 +35,7 @@ const CustomerSearch = ({
 
   const filteredCustomers = customers.filter(customer => {
     const searchLower = searchTerm.toLowerCase();
-    return searchFields.some(field => 
-      customer[field]?.toLowerCase().includes(searchLower)
-    );
+    return searchFields.some(field => customer[field]?.toLowerCase().includes(searchLower));
   });
 
   const handleInputChange = (e) => {
@@ -52,30 +50,26 @@ const CustomerSearch = ({
     const fieldValue = customer[searchFields[0]] || customer.name || '';
     setSearchTerm(fieldValue);
     onChange(fieldValue);
-    
+
     // Call the parent's onCustomerSelect to fill in all customer data
     // using a slight delay to prevent form submission
     setTimeout(() => {
       onCustomerSelect(customer);
     }, 10);
-    
+
     // Close the dropdown
     setIsOpen(false);
   };
 
   const highlightMatch = (text, searchTerm) => {
     if (!text || !searchTerm) return text;
-    
     const regex = new RegExp(`(${searchTerm})`, 'gi');
     const parts = text.split(regex);
-    
-    return parts.map((part, index) => 
-      regex.test(part) ? (
-        <mark key={index} className="bg-yellow-200 font-semibold">{part}</mark>
-      ) : (
-        part
-      )
-    );
+    return parts.map((part, index) => regex.test(part) ? (
+      <mark key={index} className="bg-yellow-200 font-semibold">{part}</mark>
+    ) : (
+      part
+    ));
   };
 
   return (
@@ -90,10 +84,7 @@ const CustomerSearch = ({
           className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
           placeholder={placeholder}
         />
-        <SafeIcon 
-          icon={FiSearch} 
-          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" 
-        />
+        <SafeIcon icon={FiSearch} className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
 
       <AnimatePresence>
@@ -119,6 +110,11 @@ const CustomerSearch = ({
                       <div className="font-medium text-gray-900 truncate">
                         {highlightMatch(customer.name, searchTerm)}
                       </div>
+                      {customer.company && (
+                        <div className="text-sm text-gray-600 truncate">
+                          <span className="font-medium">Company:</span> {highlightMatch(customer.company, searchTerm)}
+                        </div>
+                      )}
                       <div className="flex flex-col space-y-1 mt-1">
                         {customer.email && (
                           <div className="text-sm text-gray-600 truncate">
@@ -140,7 +136,7 @@ const CustomerSearch = ({
                   </div>
                 </div>
               ))}
-              
+
               {filteredCustomers.length > 8 && (
                 <div className="px-4 py-2 text-sm text-gray-500 border-t border-gray-200 bg-gray-50">
                   Showing first 8 of {filteredCustomers.length} matches. Keep typing to narrow results.
