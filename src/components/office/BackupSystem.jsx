@@ -3,25 +3,10 @@ import { motion } from 'framer-motion';
 import { useData } from '../../context/DataContext';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
-import supabase from '../../lib/supabase';
 import BackupReminder from './BackupReminder';
 import { backupScheduler } from '../../utils/backupScheduler';
 
-const {
-  FiDownload,
-  FiUpload,
-  FiDatabase,
-  FiSave,
-  FiRefreshCw,
-  FiCalendar,
-  FiClock,
-  FiCheck,
-  FiAlertCircle,
-  FiFileText,
-  FiUsers,
-  FiSettings,
-  FiShield
-} = FiIcons;
+const { FiDownload, FiUpload, FiDatabase, FiSave, FiRefreshCw, FiCalendar, FiClock, FiCheck, FiAlertCircle, FiFileText, FiUsers, FiSettings, FiShield } = FiIcons;
 
 const BackupSystem = () => {
   const { invoices, customers, users, officeInfo, settings, loadAllData } = useData();
@@ -75,7 +60,7 @@ const BackupSystem = () => {
   const createFullBackup = async () => {
     try {
       setIsCreatingBackup(true);
-      
+
       const backupData = {
         version: '1.0',
         timestamp: new Date().toISOString(),
@@ -83,7 +68,10 @@ const BackupSystem = () => {
         data: {
           invoices: invoices,
           customers: customers,
-          users: users.map(user => ({ ...user, password: '***ENCRYPTED***' })), // Don't backup actual passwords
+          users: users.map(user => ({
+            ...user,
+            password: '***ENCRYPTED***' // Don't backup actual passwords
+          })),
           officeInfo: fixedOfficeInfo, // Use fixed office info
           settings: settings
         },
@@ -97,7 +85,9 @@ const BackupSystem = () => {
       };
 
       // Create downloadable file
-      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], {
+        type: 'application/json'
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -115,15 +105,14 @@ const BackupSystem = () => {
         records: backupData.metadata.totalInvoices + backupData.metadata.totalCustomers + backupData.metadata.totalUsers,
         size: blob.size
       };
-      
+
       const history = JSON.parse(localStorage.getItem('backup_history') || '[]');
       history.unshift(newBackup);
       history.splice(10); // Keep only last 10 backups in history
-      
       localStorage.setItem('backup_history', JSON.stringify(history));
       localStorage.setItem('last_backup_date', new Date().toISOString());
-      
       setBackupHistory(history);
+
       showNotification('Full backup created successfully!', 'success');
     } catch (error) {
       console.error('Backup creation failed:', error);
@@ -138,7 +127,7 @@ const BackupSystem = () => {
     try {
       let data = [];
       let filename = '';
-      
+
       switch (dataType) {
         case 'invoices':
           data = invoices;
@@ -149,13 +138,16 @@ const BackupSystem = () => {
           filename = `fireforce_customers_${new Date().toISOString().split('T')[0]}.json`;
           break;
         case 'users':
-          data = users.map(user => ({ ...user, password: '***ENCRYPTED***' }));
+          data = users.map(user => ({
+            ...user,
+            password: '***ENCRYPTED***'
+          }));
           filename = `fireforce_users_${new Date().toISOString().split('T')[0]}.json`;
           break;
         default:
           throw new Error('Invalid data type');
       }
-      
+
       const exportData = {
         version: '1.0',
         timestamp: new Date().toISOString(),
@@ -163,8 +155,10 @@ const BackupSystem = () => {
         records: data.length,
         data: data
       };
-      
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: 'application/json'
+      });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -173,7 +167,7 @@ const BackupSystem = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showNotification(`${dataType.charAt(0).toUpperCase() + dataType.slice(1)} exported successfully!`, 'success');
     } catch (error) {
       showNotification('Export failed: ' + error.message, 'error');
@@ -193,131 +187,41 @@ const BackupSystem = () => {
       if (!backupData.data || !backupData.version || !backupData.timestamp) {
         throw new Error('Invalid backup file structure');
       }
-      
+
       setRestoreProgress({
         status: 'processing',
         progress: 20,
         message: 'Restoring customers...'
       });
 
-      // Clear and restore customers
+      // Restore customers
       if (backupData.data.customers && Array.isArray(backupData.data.customers)) {
-        // Delete existing customers
-        await supabase.from('customers_ff2024').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        
-        // Insert new customers
-        for (const customer of backupData.data.customers) {
-          const formattedCustomer = {
-            id: customer.id,
-            name: customer.name || '',
-            email: customer.email || '',
-            phone: customer.phone || '',
-            bill_to_address: customer.billToAddress || '',
-            ship_to_address: customer.shipToAddress || '',
-            accounts_payable_email: customer.accountsPayableEmail || '',
-            created_at: customer.createdAt || new Date().toISOString(),
-            updated_at: customer.updatedAt || new Date().toISOString()
-          };
-          
-          await supabase.from('customers_ff2024').insert([formattedCustomer]);
-        }
+        localStorage.setItem('fireforce_customers', JSON.stringify(backupData.data.customers));
       }
-      
+
       setRestoreProgress({
         status: 'processing',
         progress: 40,
         message: 'Restoring users...'
       });
 
-      // Clear and restore users (except for the office account)
+      // Restore users (only salesmen, preserve office accounts)
       if (backupData.data.users && Array.isArray(backupData.data.users)) {
-        // Delete existing users (only salesmen, not office)
-        await supabase.from('users_ff2024').delete().eq('role', 'salesman');
-        
-        // Insert new users
-        for (const user of backupData.data.users) {
-          // Skip office users - we don't want to modify them
-          if (user.role === 'office') continue;
-          
-          const formattedUser = {
-            id: user.id,
-            username: user.username,
-            name: user.name,
-            email: user.email || '',
-            phone: user.phone || '',
-            role: user.role,
-            password_hash: 'default123', // Use a default password, admin can reset later
-            created_at: user.createdAt || new Date().toISOString(),
-            updated_at: user.updatedAt || new Date().toISOString()
-          };
-          
-          await supabase.from('users_ff2024').insert([formattedUser]);
-        }
+        const salesmenUsers = backupData.data.users.filter(user => user.role === 'salesman');
+        localStorage.setItem('fireforce_users', JSON.stringify(salesmenUsers));
       }
-      
+
       setRestoreProgress({
         status: 'processing',
         progress: 60,
         message: 'Restoring invoices...'
       });
 
-      // Clear and restore invoices
+      // Restore invoices
       if (backupData.data.invoices && Array.isArray(backupData.data.invoices)) {
-        // First delete all invoice items
-        await supabase.from('invoice_items_ff2024').delete().neq('invoice_id', '00000000-0000-0000-0000-000000000000');
-        
-        // Then delete all invoices
-        await supabase.from('invoices_ff2024').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        
-        // Insert new invoices
-        for (const invoice of backupData.data.invoices) {
-          const formattedInvoice = {
-            id: invoice.id,
-            date: invoice.date,
-            po_number: invoice.poNumber || '',
-            sales_rep: invoice.salesRep || '',
-            transaction_type: invoice.transactionType || 'Sales Order',
-            customer_name: invoice.customerName || '',
-            customer_email: invoice.customerEmail || '',
-            customer_phone: invoice.customerPhone || '',
-            accounts_payable_email: invoice.accountsPayableEmail || '',
-            bill_to_address: invoice.billToAddress || '',
-            ship_to_address: invoice.shipToAddress || '',
-            shipping_cost: invoice.shippingCost || 0,
-            additional_info: invoice.additionalInfo || '',
-            status: invoice.status || 'pending',
-            tax_rate: invoice.taxRate || 8.0,
-            subtotal: invoice.subtotal || 0,
-            tax: invoice.tax || 0,
-            grand_total: invoice.grandTotal || 0,
-            created_at: invoice.createdAt || new Date().toISOString(),
-            updated_at: invoice.updatedAt || new Date().toISOString(),
-            archived: invoice.archived || false
-          };
-          
-          await supabase.from('invoices_ff2024').insert([formattedInvoice]);
-          
-          // Insert invoice items
-          if (invoice.items && Array.isArray(invoice.items)) {
-            for (const item of invoice.items) {
-              const formattedItem = {
-                invoice_id: invoice.id,
-                mfg: item.mfg || '',
-                part_number: item.partNumber || '',
-                description: item.description || '',
-                qty: item.qty || 0,
-                unit_price: item.unitPrice || 0,
-                taxable: item.taxable === undefined ? true : item.taxable,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-              };
-              
-              await supabase.from('invoice_items_ff2024').insert([formattedItem]);
-            }
-          }
-        }
+        localStorage.setItem('fireforce_invoices', JSON.stringify(backupData.data.invoices));
       }
-      
+
       setRestoreProgress({
         status: 'processing',
         progress: 80,
@@ -326,14 +230,9 @@ const BackupSystem = () => {
 
       // Restore settings
       if (backupData.data.settings) {
-        // Update tax rate setting
-        if (backupData.data.settings.taxRate !== undefined) {
-          await supabase
-            .from('settings_ff2024')
-            .upsert([{ key: 'tax_rate', value: backupData.data.settings.taxRate.toString() }], { onConflict: 'key' });
-        }
+        localStorage.setItem('fireforce_settings', JSON.stringify(backupData.data.settings));
       }
-      
+
       setRestoreProgress({
         status: 'processing',
         progress: 95,
@@ -342,23 +241,21 @@ const BackupSystem = () => {
 
       // Reload all data
       await loadAllData();
-      
+
       setRestoreProgress({
         status: 'completed',
         progress: 100,
         message: 'Restore completed successfully!'
       });
-      
+
       return true;
     } catch (error) {
       console.error('Database restore failed:', error);
-      
       setRestoreProgress({
         status: 'error',
         progress: 0,
         message: 'Restore failed: ' + error.message
       });
-      
       return false;
     }
   };
@@ -367,24 +264,23 @@ const BackupSystem = () => {
   const handleFileRestore = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     try {
       setIsRestoring(true);
-      
       setRestoreProgress({
         status: 'starting',
         progress: 0,
         message: 'Reading backup file...'
       });
-      
+
       const text = await file.text();
       const backupData = JSON.parse(text);
-      
+
       // Validate backup file
       if (!backupData.version || !backupData.data) {
         throw new Error('Invalid backup file format');
       }
-      
+
       // Show confirmation dialog
       const confirmed = window.confirm(
         `Are you sure you want to restore from this backup?\n\n` +
@@ -394,19 +290,22 @@ const BackupSystem = () => {
         `Users: ${backupData.metadata?.totalUsers || 'N/A'}\n\n` +
         `WARNING: This will replace all current data except for office information!`
       );
-      
+
       if (!confirmed) {
         setIsRestoring(false);
-        setRestoreProgress({ status: '', progress: 0, message: '' });
+        setRestoreProgress({
+          status: '',
+          progress: 0,
+          message: ''
+        });
         return;
       }
-      
+
       // Perform the actual database restore
       const success = await performDatabaseRestore(backupData);
-      
+
       if (success) {
         showNotification('Database restored successfully!', 'success');
-        
         // Update last backup date since we just restored from a backup
         localStorage.setItem('last_backup_date', new Date().toISOString());
       } else {
@@ -422,7 +321,6 @@ const BackupSystem = () => {
       });
     } finally {
       setIsRestoring(false);
-      
       // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -434,11 +332,8 @@ const BackupSystem = () => {
   const toggleAutoBackup = () => {
     const current = localStorage.getItem('auto_backup_enabled') === 'true';
     localStorage.setItem('auto_backup_enabled', (!current).toString());
-    
     showNotification(
-      `Auto backup ${!current ? 'enabled' : 'disabled'}. ${
-        !current ? 'Daily backups will be created automatically.' : ''
-      }`,
+      `Auto backup ${!current ? 'enabled' : 'disabled'}. ${!current ? 'Daily backups will be created automatically.' : ''}`,
       'success'
     );
   };
@@ -456,7 +351,7 @@ const BackupSystem = () => {
   React.useEffect(() => {
     const history = JSON.parse(localStorage.getItem('backup_history') || '[]');
     setBackupHistory(history);
-    
+
     // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -488,10 +383,7 @@ const BackupSystem = () => {
               : 'bg-red-50 text-red-800 border border-red-200'
           }`}
         >
-          <SafeIcon
-            icon={notification.type === 'success' ? FiCheck : FiAlertCircle}
-            className="flex-shrink-0 mt-0.5"
-          />
+          <SafeIcon icon={notification.type === 'success' ? FiCheck : FiAlertCircle} className="flex-shrink-0 mt-0.5" />
           <span className="text-sm">{notification.message}</span>
         </motion.div>
       )}
@@ -536,6 +428,7 @@ const BackupSystem = () => {
               <div className="text-sm text-gray-600">Total Records</div>
             </div>
           </div>
+
           <div className="mt-6 p-4 bg-gray-50 rounded-lg">
             <div className="flex items-center justify-between">
               <div>
@@ -639,10 +532,7 @@ const BackupSystem = () => {
                 disabled={isCreatingBackup}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <SafeIcon
-                  icon={isCreatingBackup ? FiRefreshCw : FiDownload}
-                  className={isCreatingBackup ? 'animate-spin' : ''}
-                />
+                <SafeIcon icon={isCreatingBackup ? FiRefreshCw : FiDownload} className={isCreatingBackup ? 'animate-spin' : ''} />
                 <span>{isCreatingBackup ? 'Creating Backup...' : 'Create Full Backup'}</span>
               </button>
             </div>
@@ -670,10 +560,7 @@ const BackupSystem = () => {
                 disabled={isRestoring}
                 className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <SafeIcon
-                  icon={isRestoring ? FiRefreshCw : FiUpload}
-                  className={isRestoring ? 'animate-spin' : ''}
-                />
+                <SafeIcon icon={isRestoring ? FiRefreshCw : FiUpload} className={isRestoring ? 'animate-spin' : ''} />
                 <span>{isRestoring ? 'Processing...' : 'Restore from File'}</span>
               </button>
 
@@ -750,6 +637,7 @@ const BackupSystem = () => {
                 <div className="text-sm text-gray-600">{stats.invoices} records</div>
               </div>
             </button>
+
             <button
               onClick={() => exportDataType('customers')}
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
@@ -762,6 +650,7 @@ const BackupSystem = () => {
                 <div className="text-sm text-gray-600">{stats.customers} records</div>
               </div>
             </button>
+
             <button
               onClick={() => exportDataType('users')}
               className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"

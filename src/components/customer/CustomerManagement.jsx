@@ -78,12 +78,10 @@ const CustomerManagement = () => {
   const handleCreateInvoice = (customer) => {
     // Store customer data in localStorage for invoice form
     localStorage.setItem('selectedCustomer', JSON.stringify(customer));
-
-    // Navigate to invoice creation
+    
+    // Only allow salesmen to create invoices
     if (user?.role === 'salesman') {
       navigate('/salesman/invoice/new');
-    } else {
-      navigate('/office/invoice/new');
     }
   };
 
@@ -262,13 +260,16 @@ const CustomerManagement = () => {
                   </div>
                 </div>
                 <div className="flex space-x-2">
-                  <button
-                    onClick={() => handleCreateInvoice(customer)}
-                    className="text-green-600 hover:text-green-800"
-                    title="Create Invoice"
-                  >
-                    <SafeIcon icon={FiFileText} />
-                  </button>
+                  {/* Only show create invoice button for salesmen */}
+                  {user?.role === 'salesman' && (
+                    <button
+                      onClick={() => handleCreateInvoice(customer)}
+                      className="text-green-600 hover:text-green-800"
+                      title="Create Invoice"
+                    >
+                      <SafeIcon icon={FiFileText} />
+                    </button>
+                  )}
                   <button
                     onClick={() => handleEdit(customer)}
                     className="text-gray-400 hover:text-gradient-start"
@@ -285,6 +286,7 @@ const CustomerManagement = () => {
                   </button>
                 </div>
               </div>
+
               <div className="space-y-2 text-sm text-gray-600">
                 {customer.phone && (
                   <div><strong>Phone:</strong> {customer.phone}</div>
@@ -301,16 +303,19 @@ const CustomerManagement = () => {
                   </div>
                 )}
               </div>
-              {/* Create Invoice Button */}
-              <div className="mt-4 pt-3 border-t border-gray-200">
-                <button
-                  onClick={() => handleCreateInvoice(customer)}
-                  className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-brand-gradient hover:bg-brand-gradient-hover text-white rounded-lg transition-all duration-300 text-sm font-medium"
-                >
-                  <SafeIcon icon={FiFileText} />
-                  <span>Create Invoice</span>
-                </button>
-              </div>
+
+              {/* Create Invoice Button - Only for salesmen */}
+              {user?.role === 'salesman' && (
+                <div className="mt-4 pt-3 border-t border-gray-200">
+                  <button
+                    onClick={() => handleCreateInvoice(customer)}
+                    className="w-full flex items-center justify-center space-x-2 px-3 py-2 bg-brand-gradient hover:bg-brand-gradient-hover text-white rounded-lg transition-all duration-300 text-sm font-medium"
+                  >
+                    <SafeIcon icon={FiFileText} />
+                    <span>Create Invoice</span>
+                  </button>
+                </div>
+              )}
             </motion.div>
           ))}
         </div>

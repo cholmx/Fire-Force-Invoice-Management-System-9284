@@ -28,17 +28,18 @@ const Header = ({ title }) => {
               <div className="flex items-center space-x-2">
                 <p className="text-sm text-gray-600">Fire Force Sales System</p>
                 <div className="flex items-center space-x-1">
-                  <SafeIcon
-                    icon={loading ? FiDatabase : FiWifi}
-                    className={`text-xs ${loading ? 'text-yellow-500 animate-pulse' : 'text-green-500'}`}
+                  <SafeIcon 
+                    icon={loading ? FiDatabase : FiWifi} 
+                    className={`text-xs ${loading ? 'text-yellow-500 animate-pulse' : 'text-green-500'}`} 
                   />
                   <span className="text-xs text-gray-500">
-                    {loading ? 'Syncing...' : 'Connected'}
+                    {loading ? 'Loading...' : 'Ready'}
                   </span>
                 </div>
               </div>
             </div>
           </div>
+
           <div className="flex items-center space-x-4">
             <div className="flex items-center space-x-2 text-gray-700">
               <SafeIcon icon={FiUser} className="text-lg" />

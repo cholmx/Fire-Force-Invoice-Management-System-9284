@@ -31,17 +31,15 @@ const InvoiceList = ({ userRole }) => {
   ];
 
   const filteredInvoices = invoices.filter(invoice => {
-    const matchesSearch =
-      invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesSearch = invoice.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.company?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.poNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       invoice.salesRep?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === 'all' || invoice.status === statusFilter;
     const matchesType = typeFilter === 'all' || invoice.transactionType === typeFilter;
     const matchesUser = userRole === 'office' || invoice.salesRep === user?.name;
-    const matchesArchive =
-      archiveFilter === 'all' ||
-      (archiveFilter === 'active' && !invoice.archived) ||
+    const matchesArchive = archiveFilter === 'all' || 
+      (archiveFilter === 'active' && !invoice.archived) || 
       (archiveFilter === 'archived' && invoice.archived);
     const matchesSalesman = salesmanFilter === 'all' || invoice.salesRep === salesmanFilter;
 
@@ -52,7 +50,14 @@ const InvoiceList = ({ userRole }) => {
     updateInvoice(invoiceId, { status: newStatus });
   };
 
-  const handleArchiveToggle = (invoiceId, currentArchiveState) => {
+  const handleArchiveToggle = (invoiceId, currentArchiveState, status) => {
+    // Only allow archiving if the status is completed
+    if (!currentArchiveState && status !== 'completed') {
+      alert('Only completed invoices can be archived.');
+      return;
+    }
+    
+    // Otherwise proceed with the archive/unarchive action
     updateInvoice(invoiceId, { archived: !currentArchiveState });
   };
 
@@ -91,14 +96,16 @@ const InvoiceList = ({ userRole }) => {
         <h2 className="text-2xl font-bold text-gray-900">
           {userRole === 'office' ? 'All Invoices' : 'My Invoices'}
         </h2>
-        {/* Show New Invoice button for both roles */}
-        <Link
-          to={userRole === 'office' ? '/office/invoice/new' : '/salesman/invoice/new'}
-          className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-        >
-          <SafeIcon icon={FiPlus} />
-          <span>New Invoice</span>
-        </Link>
+        {/* Only show New Invoice button for salesmen */}
+        {userRole === 'salesman' && (
+          <Link
+            to="/salesman/invoice/new"
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            <SafeIcon icon={FiPlus} />
+            <span>New Invoice</span>
+          </Link>
+        )}
       </div>
 
       {/* Filters */}
@@ -292,6 +299,7 @@ const InvoiceList = ({ userRole }) => {
                       >
                         <SafeIcon icon={FiEye} />
                       </button>
+
                       {/* Allow editing for office users or salesmen for their own invoices if not archived */}
                       {!invoice.archived && (userRole === 'office' || (userRole === 'salesman' && invoice.salesRep === user?.name)) && (
                         <Link
@@ -302,14 +310,18 @@ const InvoiceList = ({ userRole }) => {
                           <SafeIcon icon={FiEdit} />
                         </Link>
                       )}
-                      {/* Archive/Unarchive button */}
-                      <button
-                        onClick={() => handleArchiveToggle(invoice.id, invoice.archived)}
-                        className={`${invoice.archived ? 'text-blue-600 hover:text-blue-900' : 'text-amber-600 hover:text-amber-900'}`}
-                        title={invoice.archived ? 'Restore' : 'Archive'}
-                      >
-                        <SafeIcon icon={invoice.archived ? FiRefreshCw : FiArchive} />
-                      </button>
+
+                      {/* Archive/Unarchive button - only show when completed or already archived */}
+                      {(invoice.archived || invoice.status === 'completed') && (
+                        <button
+                          onClick={() => handleArchiveToggle(invoice.id, invoice.archived, invoice.status)}
+                          className={`${invoice.archived ? 'text-blue-600 hover:text-blue-900' : 'text-amber-600 hover:text-amber-900'}`}
+                          title={invoice.archived ? 'Restore' : 'Archive'}
+                        >
+                          <SafeIcon icon={invoice.archived ? FiRefreshCw : FiArchive} />
+                        </button>
+                      )}
+
                       {/* Delete button */}
                       <button
                         onClick={() => handleDeleteConfirm(invoice.id)}
