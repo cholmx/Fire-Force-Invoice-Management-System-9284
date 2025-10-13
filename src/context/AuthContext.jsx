@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import supabase from '../lib/supabase';
 
 const AuthContext = createContext();
 
@@ -51,22 +52,26 @@ export const AuthProvider = ({ children }) => {
         return { success: true };
       }
 
-      // Check salesmen users from localStorage
-      const savedUsers = localStorage.getItem('fireforce_users');
-      if (savedUsers) {
-        const users = JSON.parse(savedUsers);
-        const foundUser = users.find(u => 
-          u.username === username && 
-          u.password === password && 
-          u.role === 'salesman'
-        );
+      // Check salesmen users
+      const { data: users, error: usersError } = await supabase
+        .from('users_ff2024')
+        .select('*')
+        .eq('username', username)
+        .eq('role', 'salesman');
 
-        if (foundUser) {
+      if (usersError) {
+        console.error('Database error:', usersError);
+        return { success: false, error: 'Database connection error' };
+      }
+
+      if (users && users.length > 0) {
+        const user = users[0];
+        if (user.password_hash === password) {
           const userData = {
-            id: foundUser.id,
-            username: foundUser.username,
-            name: foundUser.name,
-            role: foundUser.role
+            id: user.id,
+            username: user.username,
+            name: user.name,
+            role: user.role
           };
           setUser(userData);
           localStorage.setItem('fireforce_user', JSON.stringify(userData));
