@@ -7,19 +7,15 @@ import InvoicePreview from '../invoice/InvoicePreview';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiFileText, FiDollarSign, FiUsers, FiTrendingUp, FiRefreshCw, FiEye, FiArchive, FiCheck } = FiIcons;
+const { FiEye, FiArchive, FiTrendingUp } = FiIcons;
 
 const OfficeStats = () => {
   const { invoices, customers, updateInvoice } = useData();
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [previewInvoice, setPreviewInvoice] = useState(null);
 
   const totalInvoices = invoices.length;
-  const totalCustomers = customers.length;
   const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.grandTotal || 0), 0);
-  const avgInvoiceValue = totalInvoices > 0 ? totalRevenue / totalInvoices : 0;
-
+  
   // Filter out archived invoices for recent activity
   const activeInvoices = invoices
     .filter(invoice => !invoice.archived)
@@ -28,23 +24,19 @@ const OfficeStats = () => {
 
   const getTypeColor = (type) => {
     switch (type) {
-      case 'Sales Order': return 'bg-red-600 text-white';
-      case 'Service Order': return 'bg-green-600 text-white';
-      case 'Quote': return 'bg-amber-500 text-white';
-      default: return 'bg-gray-600 text-white';
+      case 'Sales Order': return 'text-red-600 bg-red-50 border-red-100';
+      case 'Service Order': return 'text-emerald-600 bg-emerald-50 border-emerald-100';
+      case 'Quote': return 'text-amber-600 bg-amber-50 border-amber-100';
+      default: return 'text-gray-600 bg-gray-50 border-gray-100';
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'completed': return 'bg-green-100 text-green-800';
-      case 'in-process': return 'bg-yellow-100 text-yellow-800';
-      default: return 'bg-red-100 text-red-800';
+      case 'completed': return 'bg-emerald-100 text-emerald-700';
+      case 'in-process': return 'bg-blue-50 text-blue-700';
+      default: return 'bg-amber-50 text-amber-700';
     }
-  };
-
-  const handleInvoiceClick = (invoice) => {
-    setPreviewInvoice(invoice);
   };
 
   const handleStatusChange = async (invoiceId, newStatus) => {
@@ -65,99 +57,89 @@ const OfficeStats = () => {
 
   return (
     <div className="space-y-6">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
+           <h3 className="text-2xl font-bold text-gray-900 mt-1">${totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</h3>
+           <div className="mt-2 text-xs text-emerald-600 flex items-center">
+             <SafeIcon icon={FiTrendingUp} className="mr-1" />
+             <span>All time volume</span>
+           </div>
+        </motion.div>
+        
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Invoices</p>
+           <h3 className="text-2xl font-bold text-gray-900 mt-1">{totalInvoices}</h3>
+           <p className="mt-2 text-xs text-gray-500">Processed documents</p>
+        </motion.div>
+
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
+           <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Customers</p>
+           <h3 className="text-2xl font-bold text-gray-900 mt-1">{customers.length}</h3>
+           <p className="mt-2 text-xs text-gray-500">Active accounts</p>
+        </motion.div>
+      </div>
+
       {/* Recent Activity */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-lg"
+      <motion.div 
+        initial={{ opacity: 0, y: 10 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.3 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">Recent Activity</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            Showing recent invoices that aren't archived
-          </p>
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center">
+          <h3 className="text-sm font-bold text-gray-900">Recent Activity</h3>
+          <Link to="/office/invoices" className="text-xs font-medium text-red-600 hover:text-red-700">View All</Link>
         </div>
-        <div className="p-6">
+        
+        <div className="divide-y divide-gray-100">
           {activeInvoices.length > 0 ? (
-            <div className="space-y-4">
-              {activeInvoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="flex items-center justify-between p-3 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-100 hover:shadow-md transition-all duration-200 cursor-pointer group"
-                >
-                  <div className="flex-1" onClick={() => handleInvoiceClick(invoice)}>
-                    <p className="font-medium text-gray-900 group-hover:text-blue-700 transition-colors">
-                      {invoice.customerName || 'Unnamed Customer'}
-                    </p>
-                    {invoice.company && (
-                      <p className="text-sm text-gray-600">
-                        {invoice.company}
-                      </p>
-                    )}
-                    <p className="text-sm text-gray-600">
-                      P.O.# {invoice.poNumber || 'N/A'} • by {invoice.salesRep || 'Unknown'}
-                    </p>
-                  </div>
-                  <div className="text-right flex items-center space-x-3">
-                    <div>
-                      <p className="font-semibold text-gray-900">
-                        ${(invoice.grandTotal || 0).toFixed(2)}
-                      </p>
-                      <div className="flex items-center space-x-2">
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTypeColor(invoice.transactionType)}`}>
-                          {invoice.transactionType || 'Sales Order'}
-                        </span>
-                        {/* Status Dropdown for Status Change */}
-                        <select
-                          value={invoice.status || 'pending'}
-                          onChange={(e) => handleStatusChange(invoice.id, e.target.value)}
-                          className={`text-xs font-medium px-2 py-1 rounded-full border-0 ${getStatusColor(invoice.status)}`}
-                        >
-                          <option value="pending">Pending</option>
-                          <option value="in-process">In Process</option>
-                          <option value="completed">Completed</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => handleInvoiceClick(invoice)}
-                        className="text-blue-600 hover:text-blue-800"
-                        title="View Invoice"
-                      >
-                        <SafeIcon icon={FiEye} />
-                      </button>
-                      {/* Only show archive button for completed invoices */}
-                      {invoice.status === 'completed' && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleArchiveInvoice(invoice.id);
-                          }}
-                          className="text-amber-600 hover:text-amber-800"
-                          title="Archive Invoice"
-                        >
-                          <SafeIcon icon={FiArchive} />
-                        </button>
-                      )}
+            activeInvoices.map((invoice) => (
+              <div key={invoice.id} className="p-4 hover:bg-gray-50 transition-colors flex items-center justify-between group">
+                <div className="flex items-start space-x-3">
+                  <div className={`w-2 h-2 mt-1.5 rounded-full ${invoice.status === 'completed' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">{invoice.customerName || 'Unnamed Customer'}</p>
+                    <div className="flex items-center space-x-2 mt-0.5">
+                      <span className="text-xs text-gray-500">#{invoice.poNumber || 'N/A'}</span>
+                      <span className="text-[10px] text-gray-400">•</span>
+                      <span className="text-xs text-gray-500">{invoice.salesRep}</span>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
+                
+                <div className="flex items-center space-x-4">
+                  <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full border ${getTypeColor(invoice.transactionType)}`}>
+                    {invoice.transactionType}
+                  </span>
+                  
+                  <span className="text-sm font-bold text-gray-900 w-24 text-right">
+                    ${(invoice.grandTotal || 0).toFixed(2)}
+                  </span>
+                  
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => setPreviewInvoice(invoice)} className="p-1.5 text-gray-400 hover:text-blue-600 rounded hover:bg-blue-50">
+                      <SafeIcon icon={FiEye} className="text-sm" />
+                    </button>
+                    {invoice.status === 'completed' && (
+                      <button onClick={() => handleArchiveInvoice(invoice.id)} className="p-1.5 text-gray-400 hover:text-amber-600 rounded hover:bg-amber-50">
+                        <SafeIcon icon={FiArchive} className="text-sm" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))
           ) : (
-            <p className="text-gray-500 text-center py-8">No active invoices found</p>
+            <div className="p-8 text-center text-gray-400 text-sm">No recent activity found</div>
           )}
         </div>
       </motion.div>
 
       {/* Invoice Preview Modal */}
       {previewInvoice && (
-        <InvoicePreview
-          invoiceData={previewInvoice}
-          onClose={() => setPreviewInvoice(null)}
-        />
+        <InvoicePreview invoiceData={previewInvoice} onClose={() => setPreviewInvoice(null)} />
       )}
     </div>
   );

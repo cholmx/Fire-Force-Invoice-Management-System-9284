@@ -30,7 +30,7 @@ const UserManagement = () => {
 
   const handleSalesmanSubmit = (e) => {
     e.preventDefault();
-
+    
     if (salesmanForm.password !== salesmanForm.confirmPassword) {
       showNotification('Passwords do not match', 'error');
       return;
@@ -63,7 +63,6 @@ const UserManagement = () => {
       addUser(userData);
       showNotification('Sales user added successfully', 'success');
     }
-
     resetSalesmanForm();
   };
 
@@ -101,19 +100,10 @@ const UserManagement = () => {
   };
 
   const togglePasswordVisibility = (field) => {
-    setShowPassword(prev => ({ ...prev, [field]: !prev[field] }));
-  };
-
-  // Fixed office information
-  const fixedOfficeInfo = {
-    companyName: 'Fire Force',
-    address: 'P.O. Box 552, Columbiana Ohio 44408',
-    phone: '330-482-9300',
-    emergencyPhone: '724-586-6577',
-    email: 'Lizfireforce@yahoo.com',
-    serviceEmail: 'fireforcebutler@gmail.com',
-    username: 'ffoffice1',
-    password: 'ffpassword' // This would normally be hashed in a real system
+    setShowPassword(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
   };
 
   return (
@@ -126,9 +116,9 @@ const UserManagement = () => {
 
       {/* Notification */}
       {notification && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
           exit={{ opacity: 0, y: -20 }}
           className={`p-4 rounded-lg flex items-center space-x-2 ${
             notification.type === 'success' 
@@ -141,66 +131,17 @@ const UserManagement = () => {
         </motion.div>
       )}
 
-      {/* Office Information */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex justify-between items-center">
-            <h3 className="text-lg font-title font-semibold text-gray-900">Office Information</h3>
-            <div className="bg-blue-100 text-blue-800 px-4 py-1 rounded-full text-sm">
-              Fixed Information
-            </div>
-          </div>
-        </div>
-
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Company Information</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <div><strong>Name:</strong> {fixedOfficeInfo.companyName}</div>
-                <div><strong>Phone:</strong> {fixedOfficeInfo.phone}</div>
-                <div><strong>Emergency:</strong> {fixedOfficeInfo.emergencyPhone}</div>
-                <div><strong>Username:</strong> {fixedOfficeInfo.username}</div>
-              </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900 mb-2">Contact Information</h4>
-              <div className="space-y-2 text-sm text-gray-600">
-                <div><strong>Email:</strong> {fixedOfficeInfo.email}</div>
-                <div><strong>Service:</strong> {fixedOfficeInfo.serviceEmail}</div>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6">
-            <h4 className="font-medium text-gray-900 mb-2">Address</h4>
-            <p className="text-sm text-gray-600 whitespace-pre-line">
-              {fixedOfficeInfo.address}
-            </p>
-          </div>
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-100 rounded-lg">
-            <p className="text-sm text-amber-800">
-              <strong>Note:</strong> Office information is fixed and cannot be modified. 
-              Contact IT support if any office details need to be updated.
-            </p>
-          </div>
-        </div>
-      </motion.div>
-
       {/* Salesmen Management */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.1 }}
         className="bg-white rounded-xl shadow-lg"
       >
         <div className="p-6 border-b border-gray-200">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-title font-semibold text-gray-900">Sales Users Management</h3>
-            <button
+            <button 
               onClick={() => setShowSalesmanForm(true)}
               className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
@@ -212,9 +153,9 @@ const UserManagement = () => {
 
         {/* Salesman Form */}
         {showSalesmanForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }} 
+            animate={{ opacity: 1, height: 'auto' }} 
             exit={{ opacity: 0, height: 0 }}
             className="border-b border-gray-200"
           >
@@ -222,12 +163,12 @@ const UserManagement = () => {
               <h4 className="text-md font-semibold text-gray-900">
                 {editingUser ? 'Edit Sales User' : 'Add New Sales User'}
               </h4>
-
+              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Username *</label>
-                  <input
-                    type="text"
+                  <input 
+                    type="text" 
                     value={salesmanForm.username}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, username: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
@@ -235,51 +176,47 @@ const UserManagement = () => {
                     disabled={editingUser}
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Full Name *</label>
-                  <input
-                    type="text"
+                  <input 
+                    type="text" 
                     value={salesmanForm.name}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, name: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     required
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <input
-                    type="email"
+                  <input 
+                    type="email" 
                     value={salesmanForm.email}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, email: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
-
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-                  <input
-                    type="tel"
+                  <input 
+                    type="tel" 
                     value={salesmanForm.phone}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, phone: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                   />
                 </div>
-
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Password {editingUser && '(Leave blank to keep current)'}
                   </label>
-                  <input
-                    type={showPassword.password ? 'text' : 'password'}
+                  <input 
+                    type={showPassword.password ? 'text' : 'password'} 
                     value={salesmanForm.password}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, password: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     required={!editingUser}
                     minLength={6}
                   />
-                  <button
+                  <button 
                     type="button"
                     onClick={() => togglePasswordVisibility('password')}
                     className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
@@ -287,17 +224,16 @@ const UserManagement = () => {
                     <SafeIcon icon={showPassword.password ? FiEyeOff : FiEye} />
                   </button>
                 </div>
-
                 <div className="relative">
                   <label className="block text-sm font-medium text-gray-700 mb-2">Confirm Password</label>
-                  <input
-                    type={showPassword.confirmPassword ? 'text' : 'password'}
+                  <input 
+                    type={showPassword.confirmPassword ? 'text' : 'password'} 
                     value={salesmanForm.confirmPassword}
                     onChange={(e) => setSalesmanForm(prev => ({ ...prev, confirmPassword: e.target.value }))}
                     className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     required={!editingUser || salesmanForm.password}
                   />
-                  <button
+                  <button 
                     type="button"
                     onClick={() => togglePasswordVisibility('confirmPassword')}
                     className="absolute right-3 top-9 text-gray-400 hover:text-gray-600"
@@ -308,15 +244,15 @@ const UserManagement = () => {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <button
-                  type="button"
+                <button 
+                  type="button" 
                   onClick={resetSalesmanForm}
                   className="px-6 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
+                <button 
+                  type="submit" 
                   className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
                 >
                   {editingUser ? 'Update Sales User' : 'Add Sales User'}
@@ -331,7 +267,7 @@ const UserManagement = () => {
           {salesmen.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {salesmen.map((salesman, index) => (
-                <motion.div
+                <motion.div 
                   key={salesman.id}
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -349,14 +285,14 @@ const UserManagement = () => {
                       </div>
                     </div>
                     <div className="flex space-x-2">
-                      <button
+                      <button 
                         onClick={() => handleEditSalesman(salesman)}
                         className="text-blue-600 hover:text-blue-800"
                         title="Edit"
                       >
                         <SafeIcon icon={FiEdit} />
                       </button>
-                      <button
+                      <button 
                         onClick={() => handleDeleteSalesman(salesman)}
                         className="text-red-600 hover:text-red-800"
                         title="Delete"
@@ -365,6 +301,7 @@ const UserManagement = () => {
                       </button>
                     </div>
                   </div>
+                  
                   <div className="space-y-1 text-sm text-gray-600">
                     {salesman.email && (
                       <div><strong>Email:</strong> {salesman.email}</div>
@@ -383,7 +320,7 @@ const UserManagement = () => {
             <div className="text-center py-12">
               <SafeIcon icon={FiUser} className="text-4xl text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No sales users added yet</p>
-              <button
+              <button 
                 onClick={() => setShowSalesmanForm(true)}
                 className="mt-4 text-red-600 hover:text-red-700 font-medium"
               >
@@ -395,9 +332,9 @@ const UserManagement = () => {
       </motion.div>
 
       {/* IT Override Account */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
         transition={{ delay: 0.2 }}
         className="bg-white rounded-xl shadow-lg"
       >

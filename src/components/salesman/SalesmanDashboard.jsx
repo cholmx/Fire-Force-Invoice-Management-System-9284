@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import Header from '../layout/Header';
 import InvoiceForm from '../invoice/InvoiceForm';
@@ -13,6 +13,24 @@ const { FiPlus, FiFileText, FiUsers, FiBarChart3 } = FiIcons;
 
 const SalesmanDashboard = () => {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  // Persistent navigation state
+  useEffect(() => {
+    // Save current path to localStorage whenever it changes
+    // Only save sub-paths of /salesman, but not the root /salesman itself
+    if (location.pathname !== '/salesman') {
+      localStorage.setItem('last_salesman_path', location.pathname);
+    }
+  }, [location]);
+
+  useEffect(() => {
+    // Restore last path on mount if on root /salesman
+    const lastPath = localStorage.getItem('last_salesman_path');
+    if (location.pathname === '/salesman' && lastPath && lastPath.startsWith('/salesman')) {
+      navigate(lastPath, { replace: true });
+    }
+  }, []); // Run once on mount
 
   const navItems = [
     { path: '/salesman', label: 'Dashboard', icon: FiBarChart3 },
@@ -22,31 +40,31 @@ const SalesmanDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Header title="Sales Dashboard" />
-      <div className="flex">
-        <motion.nav
-          initial={{ x: -300 }}
-          animate={{ x: 0 }}
-          className="w-64 bg-white shadow-lg h-screen sticky top-0"
+    <div className="min-h-screen bg-[#f8f9fa]">
+      <Header title="Sales Portal" />
+      <div className="flex max-w-7xl mx-auto">
+        <motion.nav 
+          initial={{ x: -20, opacity: 0 }} 
+          animate={{ x: 0, opacity: 1 }} 
+          className="w-56 bg-white hidden md:block border-r border-gray-200 min-h-[calc(100vh-3.5rem)] sticky top-14"
         >
-          <div className="p-6">
-            <h2 className="text-lg font-title font-semibold text-gray-900 mb-6">Navigation</h2>
-            <ul className="space-y-2">
+          <div className="p-4">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4 px-3">Menu</h2>
+            <ul className="space-y-1">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.path;
                 return (
                   <li key={item.path}>
                     <Link
                       to={item.path}
-                      className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                        isActive
-                          ? 'bg-brand-gradient text-white'
-                          : 'text-gray-700 hover:bg-red-50 hover:text-gradient-start'
+                      className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
+                        isActive 
+                          ? 'bg-red-50 text-red-600' 
+                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
-                      <SafeIcon icon={item.icon} className="text-lg" />
-                      <span className="font-medium">{item.label}</span>
+                      <SafeIcon icon={item.icon} className={`text-base ${isActive ? 'text-red-500' : 'text-gray-400'}`} />
+                      <span>{item.label}</span>
                     </Link>
                   </li>
                 );
@@ -54,8 +72,8 @@ const SalesmanDashboard = () => {
             </ul>
           </div>
         </motion.nav>
-
-        <main className="flex-1 p-6">
+        
+        <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
           <Routes>
             <Route path="/" element={<SalesmanStats />} />
             <Route path="/invoice/new" element={<InvoiceForm />} />

@@ -7,45 +7,22 @@ import supabase from '../../lib/supabase';
 import BackupReminder from './BackupReminder';
 import { backupScheduler } from '../../utils/backupScheduler';
 
-const {
-  FiDownload,
-  FiUpload,
-  FiDatabase,
-  FiSave,
-  FiRefreshCw,
-  FiCalendar,
-  FiClock,
-  FiCheck,
-  FiAlertCircle,
-  FiFileText,
-  FiUsers,
-  FiSettings,
-  FiShield
-} = FiIcons;
+const { FiDownload, FiUpload, FiDatabase, FiSave, FiRefreshCw, FiClock, FiCheck, FiAlertCircle, FiFileText, FiUsers, FiSettings, FiShield } = FiIcons;
 
 const BackupSystem = () => {
-  const { invoices, customers, users, officeInfo, settings, loadAllData } = useData();
+  const { invoices, customers, users, settings, loadAllData } = useData();
   const [notification, setNotification] = useState(null);
   const [backupHistory, setBackupHistory] = useState([]);
   const [isCreatingBackup, setIsCreatingBackup] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
-  const [restoreProgress, setRestoreProgress] = useState({
-    status: '',
-    progress: 0,
-    message: ''
-  });
+  const [restoreProgress, setRestoreProgress] = useState({ status: '', progress: 0, message: '' });
   const fileInputRef = useRef(null);
 
   // Get backup statistics
   const getBackupStats = () => {
     return {
-      invoices: invoices.length,
-      customers: customers.length,
-      users: users.length,
-      totalRecords: invoices.length + customers.length + users.length + 1, // +1 for office info
       lastBackup: localStorage.getItem('last_backup_date'),
       autoBackupEnabled: localStorage.getItem('auto_backup_enabled') === 'true',
-      remindersDismissed: localStorage.getItem('reminder_dismissed_date')
     };
   };
 
@@ -55,7 +32,7 @@ const BackupSystem = () => {
     setTimeout(() => setNotification(null), 5000);
   };
 
-  // Fixed office information that should always remain the same
+  // Fixed office information that should always remain the same (preserved for logic, hidden from UI)
   const fixedOfficeInfo = {
     companyName: 'Fire Force',
     address: 'P.O. Box 552, Columbiana Ohio 44408',
@@ -75,7 +52,6 @@ const BackupSystem = () => {
   const createFullBackup = async () => {
     try {
       setIsCreatingBackup(true);
-      
       const backupData = {
         version: '1.0',
         timestamp: new Date().toISOString(),
@@ -119,11 +95,10 @@ const BackupSystem = () => {
       const history = JSON.parse(localStorage.getItem('backup_history') || '[]');
       history.unshift(newBackup);
       history.splice(10); // Keep only last 10 backups in history
-      
       localStorage.setItem('backup_history', JSON.stringify(history));
       localStorage.setItem('last_backup_date', new Date().toISOString());
-      
       setBackupHistory(history);
+      
       showNotification('Full backup created successfully!', 'success');
     } catch (error) {
       console.error('Backup creation failed:', error);
@@ -155,7 +130,7 @@ const BackupSystem = () => {
         default:
           throw new Error('Invalid data type');
       }
-      
+
       const exportData = {
         version: '1.0',
         timestamp: new Date().toISOString(),
@@ -163,7 +138,7 @@ const BackupSystem = () => {
         records: data.length,
         data: data
       };
-      
+
       const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -173,7 +148,7 @@ const BackupSystem = () => {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showNotification(`${dataType.charAt(0).toUpperCase() + dataType.slice(1)} exported successfully!`, 'success');
     } catch (error) {
       showNotification('Export failed: ' + error.message, 'error');
@@ -183,23 +158,14 @@ const BackupSystem = () => {
   // Actual database restore functionality
   const performDatabaseRestore = async (backupData) => {
     try {
-      setRestoreProgress({
-        status: 'processing',
-        progress: 10,
-        message: 'Starting restore process...'
-      });
-
+      setRestoreProgress({ status: 'processing', progress: 10, message: 'Starting restore process...' });
+      
       // First, verify the backup data structure
       if (!backupData.data || !backupData.version || !backupData.timestamp) {
         throw new Error('Invalid backup file structure');
       }
-      
-      setRestoreProgress({
-        status: 'processing',
-        progress: 20,
-        message: 'Restoring customers...'
-      });
 
+      setRestoreProgress({ status: 'processing', progress: 20, message: 'Restoring customers...' });
       // Clear and restore customers
       if (backupData.data.customers && Array.isArray(backupData.data.customers)) {
         // Delete existing customers
@@ -218,17 +184,11 @@ const BackupSystem = () => {
             created_at: customer.createdAt || new Date().toISOString(),
             updated_at: customer.updatedAt || new Date().toISOString()
           };
-          
           await supabase.from('customers_ff2024').insert([formattedCustomer]);
         }
       }
-      
-      setRestoreProgress({
-        status: 'processing',
-        progress: 40,
-        message: 'Restoring users...'
-      });
 
+      setRestoreProgress({ status: 'processing', progress: 40, message: 'Restoring users...' });
       // Clear and restore users (except for the office account)
       if (backupData.data.users && Array.isArray(backupData.data.users)) {
         // Delete existing users (only salesmen, not office)
@@ -250,22 +210,15 @@ const BackupSystem = () => {
             created_at: user.createdAt || new Date().toISOString(),
             updated_at: user.updatedAt || new Date().toISOString()
           };
-          
           await supabase.from('users_ff2024').insert([formattedUser]);
         }
       }
-      
-      setRestoreProgress({
-        status: 'processing',
-        progress: 60,
-        message: 'Restoring invoices...'
-      });
 
+      setRestoreProgress({ status: 'processing', progress: 60, message: 'Restoring invoices...' });
       // Clear and restore invoices
       if (backupData.data.invoices && Array.isArray(backupData.data.invoices)) {
         // First delete all invoice items
         await supabase.from('invoice_items_ff2024').delete().neq('invoice_id', '00000000-0000-0000-0000-000000000000');
-        
         // Then delete all invoices
         await supabase.from('invoices_ff2024').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         
@@ -294,9 +247,8 @@ const BackupSystem = () => {
             updated_at: invoice.updatedAt || new Date().toISOString(),
             archived: invoice.archived || false
           };
-          
           await supabase.from('invoices_ff2024').insert([formattedInvoice]);
-          
+
           // Insert invoice items
           if (invoice.items && Array.isArray(invoice.items)) {
             for (const item of invoice.items) {
@@ -311,54 +263,34 @@ const BackupSystem = () => {
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
               };
-              
               await supabase.from('invoice_items_ff2024').insert([formattedItem]);
             }
           }
         }
       }
-      
-      setRestoreProgress({
-        status: 'processing',
-        progress: 80,
-        message: 'Restoring settings...'
-      });
 
+      setRestoreProgress({ status: 'processing', progress: 80, message: 'Restoring settings...' });
       // Restore settings
       if (backupData.data.settings) {
         // Update tax rate setting
         if (backupData.data.settings.taxRate !== undefined) {
           await supabase
             .from('settings_ff2024')
-            .upsert([{ key: 'tax_rate', value: backupData.data.settings.taxRate.toString() }], { onConflict: 'key' });
+            .upsert([
+              { key: 'tax_rate', value: backupData.data.settings.taxRate.toString() }
+            ], { onConflict: 'key' });
         }
       }
-      
-      setRestoreProgress({
-        status: 'processing',
-        progress: 95,
-        message: 'Finalizing restore...'
-      });
 
+      setRestoreProgress({ status: 'processing', progress: 95, message: 'Finalizing restore...' });
       // Reload all data
       await loadAllData();
       
-      setRestoreProgress({
-        status: 'completed',
-        progress: 100,
-        message: 'Restore completed successfully!'
-      });
-      
+      setRestoreProgress({ status: 'completed', progress: 100, message: 'Restore completed successfully!' });
       return true;
     } catch (error) {
       console.error('Database restore failed:', error);
-      
-      setRestoreProgress({
-        status: 'error',
-        progress: 0,
-        message: 'Restore failed: ' + error.message
-      });
-      
+      setRestoreProgress({ status: 'error', progress: 0, message: 'Restore failed: ' + error.message });
       return false;
     }
   };
@@ -367,24 +299,19 @@ const BackupSystem = () => {
   const handleFileRestore = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     try {
       setIsRestoring(true);
-      
-      setRestoreProgress({
-        status: 'starting',
-        progress: 0,
-        message: 'Reading backup file...'
-      });
+      setRestoreProgress({ status: 'starting', progress: 0, message: 'Reading backup file...' });
       
       const text = await file.text();
       const backupData = JSON.parse(text);
-      
+
       // Validate backup file
       if (!backupData.version || !backupData.data) {
         throw new Error('Invalid backup file format');
       }
-      
+
       // Show confirmation dialog
       const confirmed = window.confirm(
         `Are you sure you want to restore from this backup?\n\n` +
@@ -394,19 +321,18 @@ const BackupSystem = () => {
         `Users: ${backupData.metadata?.totalUsers || 'N/A'}\n\n` +
         `WARNING: This will replace all current data except for office information!`
       );
-      
+
       if (!confirmed) {
         setIsRestoring(false);
         setRestoreProgress({ status: '', progress: 0, message: '' });
         return;
       }
-      
+
       // Perform the actual database restore
       const success = await performDatabaseRestore(backupData);
       
       if (success) {
         showNotification('Database restored successfully!', 'success');
-        
         // Update last backup date since we just restored from a backup
         localStorage.setItem('last_backup_date', new Date().toISOString());
       } else {
@@ -415,14 +341,9 @@ const BackupSystem = () => {
     } catch (error) {
       console.error('Restore failed:', error);
       showNotification('Restore failed: ' + error.message, 'error');
-      setRestoreProgress({
-        status: 'error',
-        progress: 0,
-        message: 'Error: ' + error.message
-      });
+      setRestoreProgress({ status: 'error', progress: 0, message: 'Error: ' + error.message });
     } finally {
       setIsRestoring(false);
-      
       // Clear file input
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
@@ -434,11 +355,8 @@ const BackupSystem = () => {
   const toggleAutoBackup = () => {
     const current = localStorage.getItem('auto_backup_enabled') === 'true';
     localStorage.setItem('auto_backup_enabled', (!current).toString());
-    
     showNotification(
-      `Auto backup ${!current ? 'enabled' : 'disabled'}. ${
-        !current ? 'Daily backups will be created automatically.' : ''
-      }`,
+      `Auto backup ${!current ? 'enabled' : 'disabled'}. ${!current ? 'Daily backups will be created automatically.' : ''}`, 
       'success'
     );
   };
@@ -467,385 +385,236 @@ const BackupSystem = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center space-x-3">
-        <SafeIcon icon={FiShield} className="text-2xl text-blue-600" />
-        <h2 className="text-2xl font-title font-bold text-gray-900">Backup & Restore System</h2>
+      {/* Header with Status Summary */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex items-center space-x-3">
+          <SafeIcon icon={FiShield} className="text-2xl text-blue-600" />
+          <h2 className="text-2xl font-title font-bold text-gray-900">Backup & Restore</h2>
+        </div>
+        
+        <div className="flex items-center space-x-4 bg-white px-4 py-2 rounded-lg shadow-sm border border-gray-200">
+          <div className="text-right border-r border-gray-100 pr-4 mr-1">
+            <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Last Backup</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {stats.lastBackup ? new Date(stats.lastBackup).toLocaleDateString() : 'Never'}
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <div className={`w-2 h-2 rounded-full ${stats.autoBackupEnabled ? 'bg-green-500 animate-pulse' : 'bg-gray-300'}`}></div>
+            <span className={`text-sm font-medium ${stats.autoBackupEnabled ? 'text-green-700' : 'text-gray-500'}`}>
+              {stats.autoBackupEnabled ? 'Auto-Backup On' : 'Auto-Backup Off'}
+            </span>
+          </div>
+        </div>
       </div>
 
-      {/* Backup Reminder */}
       <BackupReminder onCreateBackup={createFullBackup} />
 
       {/* Notification */}
       {notification && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }} 
+          animate={{ opacity: 1, y: 0 }} 
           exit={{ opacity: 0, y: -20 }}
           className={`p-4 rounded-lg flex items-start space-x-2 ${
-            notification.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
+            notification.type === 'success' 
+              ? 'bg-green-50 text-green-800 border border-green-200' 
               : 'bg-red-50 text-red-800 border border-red-200'
           }`}
         >
-          <SafeIcon
-            icon={notification.type === 'success' ? FiCheck : FiAlertCircle}
-            className="flex-shrink-0 mt-0.5"
-          />
+          <SafeIcon icon={notification.type === 'success' ? FiCheck : FiAlertCircle} className="flex-shrink-0 mt-0.5" />
           <span className="text-sm">{notification.message}</span>
         </motion.div>
       )}
 
-      {/* System Status */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-xl shadow-lg"
+      {/* Main Actions Card */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">System Status</h3>
-        </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <SafeIcon icon={FiFileText} className="text-blue-600 text-xl" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.invoices}</div>
-              <div className="text-sm text-gray-600">Invoices</div>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <SafeIcon icon={FiUsers} className="text-green-600 text-xl" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.customers}</div>
-              <div className="text-sm text-gray-600">Customers</div>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <SafeIcon icon={FiSettings} className="text-purple-600 text-xl" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.users}</div>
-              <div className="text-sm text-gray-600">Users</div>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                <SafeIcon icon={FiDatabase} className="text-orange-600 text-xl" />
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{stats.totalRecords}</div>
-              <div className="text-sm text-gray-600">Total Records</div>
-            </div>
-          </div>
-          <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="text-sm font-medium text-gray-700">Last Backup</div>
-                <div className="text-sm text-gray-600">
-                  {stats.lastBackup ? new Date(stats.lastBackup).toLocaleString() : 'Never'}
-                </div>
-              </div>
-              <div>
-                <div className="text-sm font-medium text-gray-700">Auto Backup</div>
-                <div className={`text-sm ${stats.autoBackupEnabled ? 'text-green-600' : 'text-red-600'}`}>
-                  {stats.autoBackupEnabled ? 'Enabled' : 'Disabled'}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Office Information Display */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-white rounded-xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">Office Information</h3>
-          <p className="text-sm text-gray-600 mt-1">
-            This information is preserved during backup/restore operations
-          </p>
-        </div>
-        <div className="p-6">
+          <h3 className="text-lg font-bold text-gray-900 mb-6 flex items-center">
+            <SafeIcon icon={FiDatabase} className="mr-2 text-gray-400" />
+            System Management
+          </h3>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-gray-900 mb-4">Company Information</h4>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div>
-                  <strong>Company:</strong> {fixedOfficeInfo.companyName}
+            {/* Create Backup */}
+            <div className="p-5 border border-blue-100 bg-blue-50/30 rounded-xl hover:border-blue-200 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600">
+                  <SafeIcon icon={FiDownload} />
                 </div>
-                <div>
-                  <strong>Address:</strong> {fixedOfficeInfo.address}
-                </div>
-                <div>
-                  <strong>Username:</strong> {fixedOfficeInfo.username}
-                </div>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">RECOMMENDED</span>
               </div>
-            </div>
-            <div>
-              <h4 className="font-medium text-gray-900 mb-4">Contact Information</h4>
-              <div className="space-y-3 text-sm text-gray-600">
-                <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
-                  <div className="font-semibold text-blue-900">Ohio Office</div>
-                  <div>
-                    <strong>Phone:</strong> {fixedOfficeInfo.ohPhone}
-                  </div>
-                  <div>
-                    <strong>Email:</strong> {fixedOfficeInfo.ohEmail}
-                  </div>
-                </div>
-                <div className="bg-purple-50 p-3 rounded-lg border border-purple-200">
-                  <div className="font-semibold text-purple-900">Pennsylvania Office</div>
-                  <div>
-                    <strong>Phone:</strong> {fixedOfficeInfo.paPhone}
-                  </div>
-                  <div>
-                    <strong>Email:</strong> {fixedOfficeInfo.paEmail}
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Backup Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">Backup Actions</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Full Backup */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiDatabase} className="text-blue-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Full System Backup</h4>
-                  <p className="text-sm text-gray-600">Complete backup of all data</p>
-                </div>
-              </div>
-              <button
-                onClick={createFullBackup}
+              <h4 className="font-bold text-gray-900 mb-1">Create Full Backup</h4>
+              <p className="text-xs text-gray-500 mb-4 h-8">Download a complete copy of all invoices, customers, and user data.</p>
+              <button 
+                onClick={createFullBackup} 
                 disabled={isCreatingBackup}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
               >
-                <SafeIcon
-                  icon={isCreatingBackup ? FiRefreshCw : FiDownload}
-                  className={isCreatingBackup ? 'animate-spin' : ''}
-                />
-                <span>{isCreatingBackup ? 'Creating Backup...' : 'Create Full Backup'}</span>
+                <SafeIcon icon={isCreatingBackup ? FiRefreshCw : FiDownload} className={isCreatingBackup ? 'animate-spin' : ''} />
+                <span>{isCreatingBackup ? 'Creating Backup...' : 'Download Backup'}</span>
               </button>
             </div>
 
             {/* Restore */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <div className="flex items-center space-x-3 mb-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <SafeIcon icon={FiUpload} className="text-green-600" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-gray-900">Restore System</h4>
-                  <p className="text-sm text-gray-600">Restore from backup file</p>
+            <div className="p-5 border border-gray-200 bg-gray-50/30 rounded-xl hover:border-gray-300 transition-colors">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600">
+                  <SafeIcon icon={FiUpload} />
                 </div>
               </div>
-              <input
+              <h4 className="font-bold text-gray-900 mb-1">Restore System</h4>
+              <p className="text-xs text-gray-500 mb-4 h-8">Restore system data from a previously saved backup file.</p>
+              <input 
                 ref={fileInputRef}
-                type="file"
+                type="file" 
                 accept=".json"
                 onChange={handleFileRestore}
                 className="hidden"
               />
-              <button
-                onClick={() => fileInputRef.current?.click()}
+              <button 
+                onClick={() => fileInputRef.current?.click()} 
                 disabled={isRestoring}
-                className="w-full flex items-center justify-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full flex items-center justify-center space-x-2 px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm transition-all"
               >
-                <SafeIcon
-                  icon={isRestoring ? FiRefreshCw : FiUpload}
-                  className={isRestoring ? 'animate-spin' : ''}
-                />
-                <span>{isRestoring ? 'Processing...' : 'Restore from File'}</span>
+                <SafeIcon icon={isRestoring ? FiRefreshCw : FiUpload} className={isRestoring ? 'animate-spin' : ''} />
+                <span>{isRestoring ? 'Processing...' : 'Upload & Restore'}</span>
               </button>
-
-              {/* Restore Progress */}
-              {restoreProgress.status && (
-                <div className="mt-4">
-                  <div className="flex justify-between mb-1">
-                    <span className="text-xs font-medium text-gray-700">{restoreProgress.message}</span>
-                    <span className="text-xs font-medium text-gray-700">{restoreProgress.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2.5">
-                    <div
-                      className={`h-2.5 rounded-full ${
-                        restoreProgress.status === 'error'
-                          ? 'bg-red-600'
-                          : restoreProgress.status === 'completed'
-                          ? 'bg-green-600'
-                          : 'bg-blue-600'
-                      }`}
-                      style={{ width: `${restoreProgress.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-              )}
             </div>
           </div>
 
-          {/* Auto Backup Toggle */}
-          <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="font-medium text-gray-900">Automatic Backups</h4>
-                <p className="text-sm text-gray-600">
-                  Automatically create daily backups of your system data
-                </p>
+          {/* Restore Progress Bar */}
+          {restoreProgress.status && (
+            <div className="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <div className="flex justify-between mb-2">
+                <span className="text-xs font-semibold text-gray-700">{restoreProgress.message}</span>
+                <span className="text-xs font-bold text-gray-900">{restoreProgress.progress}%</span>
               </div>
-              <button
-                onClick={toggleAutoBackup}
-                className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                  stats.autoBackupEnabled
-                    ? 'bg-red-600 text-white hover:bg-red-700'
-                    : 'bg-green-600 text-white hover:bg-green-700'
-                }`}
-              >
-                {stats.autoBackupEnabled ? 'Disable' : 'Enable'}
-              </button>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className={`h-2 rounded-full transition-all duration-300 ${
+                    restoreProgress.status === 'error' ? 'bg-red-500' : 
+                    restoreProgress.status === 'completed' ? 'bg-green-500' : 'bg-blue-500'
+                  }`} 
+                  style={{ width: `${restoreProgress.progress}%` }}
+                ></div>
+              </div>
             </div>
+          )}
+
+          {/* Auto Backup Toggle */}
+          <div className="mt-6 pt-6 border-t border-gray-100 flex items-center justify-between">
+            <div>
+              <h4 className="text-sm font-bold text-gray-900">Automatic Daily Backups</h4>
+              <p className="text-xs text-gray-500 mt-1">System will automatically back up data every 24 hours.</p>
+            </div>
+            <button 
+              onClick={toggleAutoBackup}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                stats.autoBackupEnabled ? 'bg-blue-600' : 'bg-gray-200'
+              }`}
+            >
+              <span className="sr-only">Enable auto backup</span>
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                  stats.autoBackupEnabled ? 'translate-x-6' : 'translate-x-1'
+                }`}
+              />
+            </button>
           </div>
         </div>
       </motion.div>
 
-      {/* Data Export */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-white rounded-xl shadow-lg"
+      {/* Data Export - Simplified */}
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.1 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
-        <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">Data Export</h3>
-          <p className="text-sm text-gray-600 mt-1">Export specific data types separately</p>
-        </div>
         <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <button
+          <h3 className="text-lg font-bold text-gray-900 mb-4 flex items-center">
+            <SafeIcon icon={FiFileText} className="mr-2 text-gray-400" />
+            Quick Export
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <button 
               onClick={() => exportDataType('invoices')}
-              className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all text-sm font-medium"
             >
-              <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
-                <SafeIcon icon={FiFileText} className="text-red-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Export Invoices</div>
-                <div className="text-sm text-gray-600">{stats.invoices} records</div>
-              </div>
+              <SafeIcon icon={FiFileText} className="text-gray-400" />
+              <span>Export Invoices</span>
             </button>
-            <button
+            <button 
               onClick={() => exportDataType('customers')}
-              className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all text-sm font-medium"
             >
-              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                <SafeIcon icon={FiUsers} className="text-green-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Export Customers</div>
-                <div className="text-sm text-gray-600">{stats.customers} records</div>
-              </div>
+              <SafeIcon icon={FiUsers} className="text-gray-400" />
+              <span>Export Customers</span>
             </button>
-            <button
+            <button 
               onClick={() => exportDataType('users')}
-              className="flex items-center space-x-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+              className="flex items-center justify-center space-x-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 text-gray-700 transition-all text-sm font-medium"
             >
-              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-                <SafeIcon icon={FiSettings} className="text-purple-600" />
-              </div>
-              <div className="text-left">
-                <div className="font-medium text-gray-900">Export Users</div>
-                <div className="text-sm text-gray-600">{stats.users} records</div>
-              </div>
+              <SafeIcon icon={FiSettings} className="text-gray-400" />
+              <span>Export Users</span>
             </button>
           </div>
         </div>
       </motion.div>
 
       {/* Backup History */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="bg-white rounded-xl shadow-lg"
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }} 
+        animate={{ opacity: 1, y: 0 }} 
+        transition={{ delay: 0.2 }}
+        className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
       >
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-lg font-title font-semibold text-gray-900">Backup History</h3>
-          <p className="text-sm text-gray-600 mt-1">Recent backup activities</p>
+          <h3 className="text-lg font-bold text-gray-900">Recent History</h3>
         </div>
-        <div className="p-6">
+        <div className="p-0">
           {backupHistory.length > 0 ? (
-            <div className="space-y-3">
-              {backupHistory.map((backup, index) => (
-                <div
-                  key={backup.id}
-                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-                >
+            <div className="divide-y divide-gray-100">
+              {backupHistory.map((backup) => (
+                <div key={backup.id} className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                      <SafeIcon icon={FiSave} className="text-blue-600 text-sm" />
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500">
+                      <SafeIcon icon={FiClock} className="text-xs" />
                     </div>
                     <div>
-                      <div className="font-medium text-gray-900">{backup.type}</div>
-                      <div className="text-sm text-gray-600">
+                      <div className="text-sm font-medium text-gray-900">{backup.type}</div>
+                      <div className="text-xs text-gray-500">
                         {new Date(backup.timestamp).toLocaleString()}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right text-sm text-gray-600">
-                    <div>{backup.records} records</div>
-                    <div>{formatFileSize(backup.size)}</div>
+                  <div className="text-right">
+                    <div className="text-xs font-bold text-gray-700">{backup.records} records</div>
+                    <div className="text-[10px] text-gray-400">{formatFileSize(backup.size)}</div>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <SafeIcon icon={FiClock} className="text-4xl text-gray-300 mx-auto mb-2" />
-              <p className="text-gray-500">No backup history available</p>
-              <p className="text-sm text-gray-400 mt-1">Create your first backup to see history</p>
+            <div className="text-center py-8 text-gray-400 text-sm">
+              No backup history available
             </div>
           )}
         </div>
       </motion.div>
 
       {/* Security Notice */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.5 }}
-        className="bg-amber-50 border border-amber-200 rounded-xl p-6"
-      >
-        <div className="flex items-start space-x-3">
-          <SafeIcon icon={FiShield} className="text-amber-600 text-xl flex-shrink-0 mt-0.5" />
-          <div>
-            <h4 className="font-medium text-amber-800 mb-2">Security Notice</h4>
-            <div className="text-sm text-amber-700 space-y-1">
-              <p>• Backup files contain sensitive business data. Store them securely.</p>
-              <p>• User passwords are not included in backups for security reasons.</p>
-              <p>• Office information is protected and preserved during restore operations.</p>
-              <p>• Restore operations require IT administrator privileges.</p>
-              <p>• Always verify backup integrity before relying on them for recovery.</p>
-            </div>
-          </div>
-        </div>
-      </motion.div>
+      <div className="text-center">
+        <p className="text-xs text-gray-400 flex items-center justify-center">
+          <SafeIcon icon={FiShield} className="mr-1.5" />
+          Backups exclude user passwords for security. Office information is preserved during restore.
+        </p>
+      </div>
     </div>
   );
 };
