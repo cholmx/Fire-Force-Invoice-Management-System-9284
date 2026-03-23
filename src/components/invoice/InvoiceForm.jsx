@@ -454,7 +454,7 @@ const InvoiceForm = () => {
                </div>
                <div className="pt-3 border-t border-gray-200 flex justify-between items-center">
                  <span className="text-base font-bold text-gray-900">Total:</span>
-                 <span className="text-lg font-bold text-brand-gradient bg-clip-text text-transparent">
+                 <span className="text-lg font-bold text-red-600">
                    ${grandTotal.toFixed(2)}
                  </span>
                </div>
