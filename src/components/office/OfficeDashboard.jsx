@@ -10,55 +10,39 @@ import Settings from './Settings';
 import UserManagement from './UserManagement';
 import BackupSystem from './BackupSystem';
 import BackupReminder from './BackupReminder';
+import ReportsPage from './reports/ReportsPage';
 import { backupScheduler } from '../../utils/backupScheduler';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiBarChart3, FiFileText, FiUsers, FiSettings, FiUserCheck, FiShield } = FiIcons;
+const { FiBarChart3, FiFileText, FiUsers, FiSettings, FiUserCheck, FiShield, FiPieChart } = FiIcons;
 
 const OfficeDashboard = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [showBackupReminder, setShowBackupReminder] = useState(false);
 
-  // Persistent navigation state
   useEffect(() => {
-    // Save current path to localStorage whenever it changes
-    // Only save sub-paths of /office, but not the root /office itself to avoid loops
     if (location.pathname !== '/office') {
       localStorage.setItem('last_office_path', location.pathname);
     }
   }, [location]);
 
   useEffect(() => {
-    // Restore last path on mount if on root /office
     const lastPath = localStorage.getItem('last_office_path');
     if (location.pathname === '/office' && lastPath && lastPath.startsWith('/office')) {
       navigate(lastPath, { replace: true });
     }
-  }, []); // Run once on mount
+  }, []);
 
-  // Check if a backup reminder should be shown
   useEffect(() => {
     const checkReminder = () => {
-      if (backupScheduler.isReminderDue()) {
-        setShowBackupReminder(true);
-      }
+      if (backupScheduler.isReminderDue()) setShowBackupReminder(true);
     };
-    
-    // Initial check
     checkReminder();
-    
-    // Setup listener for reminder events
-    const handleReminderEvent = () => {
-      setShowBackupReminder(true);
-    };
-    
+    const handleReminderEvent = () => setShowBackupReminder(true);
     window.addEventListener('backup-reminder-due', handleReminderEvent);
-    
-    // Check periodically (every 15 minutes)
     const intervalId = setInterval(checkReminder, 15 * 60 * 1000);
-    
     return () => {
       window.removeEventListener('backup-reminder-due', handleReminderEvent);
       clearInterval(intervalId);
@@ -70,13 +54,13 @@ const OfficeDashboard = () => {
     { path: '/office/invoices', label: 'Invoices', icon: FiFileText },
     { path: '/office/customers', label: 'Customers', icon: FiUsers },
     { path: '/office/users', label: 'Users', icon: FiUserCheck },
+    { path: '/office/reports', label: 'Reports', icon: FiPieChart },
     { path: '/office/backup', label: 'Backup', icon: FiShield },
-    { path: '/office/settings', label: 'Settings', icon: FiSettings }
+    { path: '/office/settings', label: 'Settings', icon: FiSettings },
   ];
 
   const handleBackupCreated = () => {
     setShowBackupReminder(false);
-    // Set last backup date
     localStorage.setItem('last_backup_date', new Date().toISOString());
   };
 
@@ -89,9 +73,9 @@ const OfficeDashboard = () => {
     <div className="min-h-screen bg-[#f8f9fa]">
       <Header title="Office" />
       <div className="flex max-w-7xl mx-auto">
-        <motion.nav 
-          initial={{ x: -20, opacity: 0 }} 
-          animate={{ x: 0, opacity: 1 }} 
+        <motion.nav
+          initial={{ x: -20, opacity: 0 }}
+          animate={{ x: 0, opacity: 1 }}
           className="w-56 bg-white hidden md:block border-r border-gray-200 min-h-[calc(100vh-3.5rem)] sticky top-14"
         >
           <div className="p-4">
@@ -104,9 +88,7 @@ const OfficeDashboard = () => {
                     <Link
                       to={item.path}
                       className={`flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm font-medium ${
-                        isActive 
-                          ? 'bg-red-50 text-red-600' 
-                          : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                        isActive ? 'bg-red-50 text-red-600' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                       }`}
                     >
                       <SafeIcon icon={item.icon} className={`text-base ${isActive ? 'text-red-500' : 'text-gray-400'}`} />
@@ -118,21 +100,20 @@ const OfficeDashboard = () => {
             </ul>
           </div>
         </motion.nav>
-        
+
         <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
-          {/* Backup Reminder */}
           {showBackupReminder && location.pathname !== '/office/backup' && (
             <div className="mb-6">
               <BackupReminder onCreateBackup={handleBackupCreated} onDismiss={handleDismissReminder} />
             </div>
           )}
-          
           <Routes>
             <Route path="/" element={<OfficeStats />} />
             <Route path="/invoice/edit/:id" element={<InvoiceForm />} />
             <Route path="/invoices" element={<InvoiceList userRole="office" />} />
             <Route path="/customers" element={<CustomerManagement />} />
             <Route path="/users" element={<UserManagement />} />
+            <Route path="/reports" element={<ReportsPage />} />
             <Route path="/backup" element={<BackupSystem />} />
             <Route path="/settings" element={<Settings />} />
           </Routes>
