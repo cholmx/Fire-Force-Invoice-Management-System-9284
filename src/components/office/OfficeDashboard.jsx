@@ -15,7 +15,7 @@ import { backupScheduler } from '../../utils/backupScheduler';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiBarChart3, FiFileText, FiUsers, FiSettings, FiUserCheck, FiShield, FiPieChart } = FiIcons;
+const { FiBarChart3, FiFileText, FiUsers, FiSettings, FiUserCheck, FiShield, FiPieChart, FiPlusCircle } = FiIcons;
 
 const OfficeDashboard = () => {
   const location = useLocation();
@@ -51,6 +51,7 @@ const OfficeDashboard = () => {
 
   const navItems = [
     { path: '/office', label: 'Dashboard', icon: FiBarChart3 },
+    { path: '/office/invoice/new', label: 'New Invoice', icon: FiPlusCircle },
     { path: '/office/invoices', label: 'Invoices', icon: FiFileText },
     { path: '/office/customers', label: 'Customers', icon: FiUsers },
     { path: '/office/users', label: 'Users', icon: FiUserCheck },
@@ -109,6 +110,7 @@ const OfficeDashboard = () => {
           )}
           <Routes>
             <Route path="/" element={<OfficeStats />} />
+            <Route path="/invoice/new" element={<InvoiceForm />} />
             <Route path="/invoice/edit/:id" element={<InvoiceForm />} />
             <Route path="/invoices" element={<InvoiceList userRole="office" />} />
             <Route path="/customers" element={<CustomerManagement />} />
