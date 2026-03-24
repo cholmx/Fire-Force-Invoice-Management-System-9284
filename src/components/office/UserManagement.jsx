@@ -4,7 +4,7 @@ import { useData } from '../../context/DataContext';
 import SafeIcon from '../../common/SafeIcon';
 import * as FiIcons from 'react-icons/fi';
 
-const { FiPlus, FiEdit, FiTrash2, FiUser, FiLock, FiEye, FiEyeOff, FiCheck, FiAlertCircle } = FiIcons;
+const { FiPlus, FiEdit, FiTrash2, FiUser, FiEye, FiEyeOff, FiCheck, FiAlertCircle } = FiIcons;
 
 const UserManagement = () => {
   const { users, addUser, updateUser, deleteUser } = useData();
@@ -331,42 +331,6 @@ const UserManagement = () => {
         </div>
       </motion.div>
 
-      {/* IT Override Account */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }} 
-        animate={{ opacity: 1, y: 0 }} 
-        transition={{ delay: 0.2 }}
-        className="bg-white rounded-xl shadow-lg"
-      >
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <SafeIcon icon={FiLock} className="text-lg text-gray-700" />
-            <h3 className="text-lg font-title font-semibold text-gray-900">IT Override Access</h3>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <div className="flex items-start space-x-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <SafeIcon icon={FiLock} className="text-white text-xl" />
-              </div>
-              <div>
-                <h4 className="font-medium text-gray-900 mb-1">IT Support Override Account</h4>
-                <p className="text-sm text-gray-600 mb-3">
-                  This account has administrator access to all areas of the system for technical support purposes.
-                </p>
-                <div className="bg-blue-50 border border-blue-200 rounded p-3 text-sm">
-                  <div><strong>Username:</strong> cholmx</div>
-                  <div><strong>Password:</strong> ●●●●●●●●●●●●●</div>
-                  <div className="text-xs text-gray-500 mt-2">
-                    This account bypasses normal authentication and should only be used by authorized IT personnel.
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </div>
   );
 };
